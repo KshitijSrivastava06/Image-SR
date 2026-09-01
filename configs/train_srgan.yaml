@@ -1,0 +1,39 @@
+model:
+  name: srgan
+  scale_factor: 4
+  generator_weights: outputs/checkpoints/srresnet/best_model.pth  # warm-start from SRResNet
+
+data:
+  train_hr_dir: data/datasets/div2k/DIV2K_train_HR
+  val_hr_dir: data/datasets/div2k/DIV2K_valid_HR
+  patch_size: 96
+  batch_size: 8           # G+D together -> reduced batch size for 8GB VRAM
+  num_workers: 4
+  cache_in_ram: false
+
+training:
+  epochs: 100             # Warm-started from SRResNet; GAN stabilizes quickly
+  generator:
+    optimizer: adam
+    lr: 0.0001
+    betas: [0.9, 0.999]
+  discriminator:
+    optimizer: adam
+    lr: 0.0001
+    betas: [0.9, 0.999]
+  lr_scheduler: step
+  lr_step_size: 50
+  lr_gamma: 0.1
+  loss_weights:
+    pixel: 1.0            # L1 pixel loss
+    perceptual: 0.006     # VGG perceptual loss
+    adversarial: 0.001    # GAN loss
+  amp: true
+  grad_clip: 1.0
+  label_smoothing: true
+  val_every: 5
+  early_stopping_patience: 30
+
+output:
+  checkpoint_dir: outputs/checkpoints/srgan
+  log_file: outputs/logs/srgan_train.log

@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project-specific ignores
+data/datasets/
+outputs/
+models/*/final.pth
+scratch/
+test_run_results.md
+utils_cleanup_walkthrough.md
+walkthrough.md
+task.md
+code_review.md
+implementation_plan.md
+print_keys.py
+test_all_models.py
+
+# System files
+.DS_Store
+Thumbs.db

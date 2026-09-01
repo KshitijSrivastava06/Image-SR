@@ -1,0 +1,23 @@
+models:
+  default: esrgan_generator
+  available:
+    - bicubic
+    - srcnn
+    - srresnet
+    - srgan_generator
+    - esrgan_generator
+  scale_factor: 4
+
+pretrained:
+  cache_dir: models/pretrained
+  auto_download: true
+
+inference:
+  device: auto          # auto, cuda, cpu
+  half_precision: false  # Use fp16 for faster inference
+  tile_size: 256        # 0 = no tiling, >0 = tile-based inference for large images
+  tile_overlap: 16      # Overlap in pixels between adjacent tiles
+
+database:
+  path: outputs/inference_runs.db
+  enabled: true
