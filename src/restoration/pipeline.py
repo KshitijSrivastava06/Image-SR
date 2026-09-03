@@ -15,6 +15,7 @@ import torch
 from src.restoration.denoiser import Denoiser
 from src.restoration.deblurrer import Deblurrer
 from src.restoration.enhancer import ContrastEnhancer
+from src.restoration.jpeg_deblock import JPEGDeBlocker
 from src.utils.common import numpy_to_tensor, tensor_to_numpy
 from src.utils.logger import get_logger
 
@@ -38,6 +39,8 @@ class RestorationPipeline:
 
     def __init__(
         self,
+        jpeg_deblock: bool = False,
+        jpeg_quality: int = 50,
         denoise: bool = False,
         denoise_method: str = "nlm",
         denoise_strength: int = 10,
@@ -51,6 +54,12 @@ class RestorationPipeline:
         device: Optional[torch.device] = None,
     ):
         self.steps = []
+
+        if jpeg_deblock:
+            self.jpeg_deblocker = JPEGDeBlocker(quality=jpeg_quality)
+            self.steps.append(("jpeg_deblock", self._jpeg_deblock))
+        else:
+            self.jpeg_deblocker = None
 
         if denoise:
             self.denoiser = Denoiser(method=denoise_method, strength=denoise_strength)
@@ -107,6 +116,9 @@ class RestorationPipeline:
     # ------------------------------------------------------------------
     # Step implementations
     # ------------------------------------------------------------------
+
+    def _jpeg_deblock(self, img: np.ndarray) -> np.ndarray:
+        return self.jpeg_deblocker.deblock(img)
 
     def _denoise(self, img: np.ndarray) -> np.ndarray:
         return self.denoiser.denoise(img)

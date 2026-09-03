@@ -39,9 +39,11 @@ from app.utils import (
 from src.utils.preprocessing import mod_crop
 from models.pretrained_weights import PRETRAINED_REGISTRY
 from src.restoration import RestorationPipeline
+from src.utils.common import tensor_to_numpy
 from src.utils.inference_utils import postprocess_output, prepare_input
 from src.utils.tiled_inference import tiled_forward
 from src.evaluation.metrics import MetricCalculator
+from src.restoration.post_processor import PostProcessor
 
 
 # =====================================================================
@@ -256,37 +258,71 @@ def render_sidebar():
 
         # Restoration Pipeline
         st.markdown("### 🔧 Restoration Pipeline")
-        st.caption("Optional pre-processing before super-resolution")
+        st.caption("Pre-processing before super-resolution")
 
-        use_denoise = st.checkbox("🔇 Denoise", value=False)
+        preset = st.selectbox(
+            "Preset",
+            ["None", "Photo Cleanup", "Old Photo Restore", "JPEG Fix", "Custom"],
+            help="Auto-configure the restoration pipeline"
+        )
+
+        use_jpeg = False
+        jpeg_quality = 50
+        use_denoise = False
         denoise_method = "nlm"
         denoise_strength = 10
-        if use_denoise:
-            denoise_method = st.selectbox(
-                "Method", ["nlm", "median", "bilateral"],
-                key="denoise_method",
-            )
-            denoise_strength = st.slider("Strength", 1, 30, 10, key="denoise_str")
-
-        use_deblur = st.checkbox("🌀 Deblur", value=False)
+        use_deblur = False
         deblur_method = "unsharp"
         deblur_strength = 1.5
-        if use_deblur:
-            deblur_method = st.selectbox(
-                "Method", ["unsharp", "laplacian", "wiener"],
-                key="deblur_method",
-            )
-            deblur_strength = st.slider("Strength", 0.5, 5.0, 1.5, key="deblur_str")
-
-        use_enhance = st.checkbox("✨ Contrast Enhance", value=False)
+        use_enhance = False
         enhance_method = "clahe"
         enhance_strength = 2.0
-        if use_enhance:
-            enhance_method = st.selectbox(
-                "Method", ["clahe", "gamma", "auto_wb", "histogram"],
-                key="enhance_method",
-            )
-            enhance_strength = st.slider("Strength", 0.5, 5.0, 2.0, key="enhance_str")
+        use_post_process = True
+        post_process_strength = 0.5
+
+        if preset == "Photo Cleanup":
+            use_denoise, denoise_method, denoise_strength = True, "nlm", 5
+            use_post_process, post_process_strength = True, 0.4
+        elif preset == "Old Photo Restore":
+            use_denoise, denoise_method, denoise_strength = True, "nlm", 15
+            use_enhance, enhance_method, enhance_strength = True, "clahe", 3.0
+            use_post_process, post_process_strength = True, 0.7
+        elif preset == "JPEG Fix":
+            use_jpeg, jpeg_quality = True, 40
+            use_post_process, post_process_strength = True, 0.5
+        elif preset == "Custom":
+            with st.expander("Advanced Settings", expanded=True):
+                use_jpeg = st.checkbox("🧩 JPEG Deblock", value=False)
+                if use_jpeg:
+                    jpeg_quality = st.slider("JPEG Quality", 10, 100, 50, key="jpeg_q")
+                
+                use_denoise = st.checkbox("🔇 Denoise", value=False)
+                if use_denoise:
+                    denoise_method = st.selectbox(
+                        "Denoise Method", ["nlm", "median", "bilateral"],
+                        key="denoise_method",
+                    )
+                    denoise_strength = st.slider("Denoise Strength", 1, 30, 10, key="denoise_str")
+
+                use_deblur = st.checkbox("🌀 Deblur", value=False)
+                if use_deblur:
+                    deblur_method = st.selectbox(
+                        "Deblur Method", ["unsharp", "laplacian", "wiener"],
+                        key="deblur_method",
+                    )
+                    deblur_strength = st.slider("Deblur Strength", 0.5, 5.0, 1.5, key="deblur_str")
+
+                use_enhance = st.checkbox("✨ Contrast Enhance", value=False)
+                if use_enhance:
+                    enhance_method = st.selectbox(
+                        "Enhance Method", ["clahe", "gamma", "auto_wb", "histogram"],
+                        key="enhance_method",
+                    )
+                    enhance_strength = st.slider("Enhance Strength", 0.5, 5.0, 2.0, key="enhance_str")
+                
+                use_post_process = st.checkbox("🪄 Post-SR Refine", value=True)
+                if use_post_process:
+                    post_process_strength = st.slider("Refinement Strength", 0.1, 1.0, 0.5, key="pp_str")
 
         st.markdown("---")
 
@@ -300,6 +336,9 @@ def render_sidebar():
     return {
         "model_name": model_name.lower(),
         "scale_factor": scale_factor,
+        "preset": preset,
+        "jpeg_deblock": use_jpeg,
+        "jpeg_quality": jpeg_quality,
         "denoise": use_denoise,
         "denoise_method": denoise_method,
         "denoise_strength": denoise_strength,
@@ -309,6 +348,8 @@ def render_sidebar():
         "enhance": use_enhance,
         "enhance_method": enhance_method,
         "enhance_strength": enhance_strength,
+        "post_process": use_post_process,
+        "post_process_strength": post_process_strength,
     }
 
 
@@ -372,9 +413,28 @@ def render_enhance_tab(config: dict):
 
     # Load and display original image
     original_image = Image.open(uploaded_file).convert("RGB")
+    img_np = np.array(original_image)
     
     # Display image metadata
-    st.info(f"Image loaded: {original_image.size[0]}x{original_image.size[1]} pixels.")
+    st.info(f"Image loaded: {original_image.width}×{original_image.height} pixels.")
+    
+    # Auto-Detect Image Quality
+    with st.expander("📊 Auto-Detect Image Quality", expanded=False):
+        from src.restoration.auto_detect import ImageQualityAnalyzer
+        analyzer = ImageQualityAnalyzer()
+        analysis = analyzer.analyze(img_np)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"**Blur:** {'Detected' if analysis['is_blurry'] else 'None'}")
+            st.markdown(f"**Noise:** {'Detected' if analysis['is_noisy'] else 'Low'}")
+        with col2:
+            st.markdown(f"**JPEG Compression:** {'High' if analysis['is_jpeg_heavy'] else 'Normal'}")
+            st.markdown(f"**Suggested Preset:** `{analysis['recommended_preset']}`")
+        
+        if analysis['recommended_preset'] != "None":
+            st.warning(analysis['reason'] + f" Consider selecting the **{analysis['recommended_preset']}** preset in the sidebar.")
+
 
     # Invalidate cached results when image changes
     img_hash = hash(uploaded_file.getvalue())
@@ -436,15 +496,19 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     progress.progress(20, text="Model loaded. Preparing image...")
 
     img_np = pil_to_numpy(original_image)
-    use_restoration = config["denoise"] or config["deblur"] or config["enhance"]
+    use_restoration = config["jpeg_deblock"] or config["denoise"] or config["deblur"] or config["enhance"]
 
     # Step 2: Mod-crop & Restoration pipeline
     # Mod-crop prevents checkerboard artifacts from PixelShuffle
     img_np = mod_crop(img_np, config["scale_factor"])
     
+    intermediates = {}
     if use_restoration:
         progress.progress(30, text="Running restoration pipeline...")
+        from src.restoration.pipeline import RestorationPipeline
         pipeline = RestorationPipeline(
+            jpeg_deblock=config["jpeg_deblock"],
+            jpeg_quality=config["jpeg_quality"],
             denoise=config["denoise"],
             denoise_method=config["denoise_method"],
             denoise_strength=config["denoise_strength"],
@@ -455,7 +519,7 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
             enhance_method=config["enhance_method"],
             enhance_strength=config["enhance_strength"],
         )
-        img_np, _ = pipeline.process(img_np)
+        img_np, intermediates = pipeline.process(img_np, return_intermediates=True)
 
     progress.progress(50, text="Running super-resolution...")
 
@@ -487,10 +551,20 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     # Reverse color space / normalization formatting
     sr_tensor = postprocess_output(sr_tensor, config["model_name"], config["scale_factor"], PRETRAINED_REGISTRY)
 
+    # Convert to numpy for post-processing/metrics
+    sr_np = tensor_to_numpy(sr_tensor)
+    sr_np = (sr_np * 255.0).clip(0, 255).astype(np.uint8)
+
+    # Step 3.5: Post-SR Refinement
+    if config["post_process"]:
+        progress.progress(75, text="Refining output...")
+        pp = PostProcessor(strength=config["post_process_strength"])
+        sr_np = pp.process(sr_np)
+
     progress.progress(80, text="Computing metrics...")
 
-    # Convert result
-    sr_image = tensor_to_pil(sr_tensor)
+    # Convert result to PIL for display
+    sr_image = numpy_to_pil(sr_np)
 
     # Step 4: Compute similarity metrics vs bicubic baseline
     # NOTE: These compare SR output against bicubic upscale, NOT a ground-truth HR image.
@@ -498,7 +572,6 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     metrics = {}
     try:
         mc = MetricCalculator()
-        sr_np = np.array(sr_image)
         from PIL import Image as PILImage
         ref = original_image.resize(
             (sr_image.width, sr_image.height),
@@ -544,8 +617,9 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     st.session_state["sr_result"] = sr_image
     st.session_state["metrics"] = metrics
     st.session_state["elapsed"] = elapsed
+    st.session_state["intermediates"] = intermediates if 'intermediates' in locals() else {}
 
-    _display_results(original_image, sr_image, metrics, elapsed)
+    _display_results(original_image, sr_image, metrics, elapsed, st.session_state["intermediates"])
 
 
 def _display_results(
@@ -553,8 +627,9 @@ def _display_results(
     sr_image: Image.Image,
     metrics: dict,
     elapsed: float,
+    intermediates: dict = None,
 ):
-    """Display enhancement results with before/after comparison."""
+    """Display enhancement results with before/after comparison and optional pipeline steps."""
     st.markdown("---")
     st.markdown("### 📊 Results")
 
@@ -622,6 +697,21 @@ def _display_results(
         mime="image/png",
         use_container_width=True,
     )
+
+    # Optional Pipeline Visualization
+    if intermediates and len(intermediates) > 1:
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.expander("🔍 Pipeline Steps Visualization", expanded=False):
+            st.markdown("See the intermediate output after each active restoration step.")
+            steps = list(intermediates.keys())
+            
+            # Show steps in columns
+            cols = st.columns(len(steps))
+            for i, (step_name, img_arr) in enumerate(intermediates.items()):
+                with cols[i]:
+                    st.image(img_arr, caption=step_name.replace("_", " ").title(), use_container_width=True)
+                    if i < len(steps) - 1:
+                        st.markdown("<div style='text-align:center;'>⬇️</div>", unsafe_allow_html=True)
 
 
 # =====================================================================
