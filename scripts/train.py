@@ -94,12 +94,16 @@ def run_training(config_path: str, resume_path: str = None):
     )
     
     # 2. Model
+    model_kwargs = {k: v for k, v in config["model"].items() if k not in ("name", "generator_weights")}
     if model_name == "srgan":
-        generator = get_model("srgan_generator", scale_factor=scale_factor).to(device)
+        generator = get_model("srgan_generator", **model_kwargs).to(device)
         if "generator_weights" in config["model"]:
             ckpt = torch.load(config["model"]["generator_weights"], map_location=device)
             # Support loading from best_model.pth or direct state_dict
             state_dict = ckpt["model_state_dict"] if "model_state_dict" in ckpt else ckpt
+            if getattr(generator, "use_batchnorm", True) is False:
+                from models.srresnet import fold_srresnet_bn
+                state_dict = fold_srresnet_bn(state_dict)
             generator.load_state_dict(state_dict)
             logger.info(f"Loaded generator warm-start weights from {config['model']['generator_weights']}")
             
@@ -142,7 +146,7 @@ def run_training(config_path: str, resume_path: str = None):
         )
         
     else:
-        model = get_model(model_name, scale_factor=scale_factor).to(device)
+        model = get_model(model_name, **model_kwargs).to(device)
         
         opt = build_optimizer(
             config["training"]["optimizer"],
@@ -176,17 +180,38 @@ def run_training(config_path: str, resume_path: str = None):
     # 3. Train
     trainer.train()
     
-    # 4. Save Final Weights to Local Fallback Location
+    # 4. Save Final Weights (Preferring Best Checkpoint over Last Epoch)
     final_dir = Path(f"models/{model_name}")
     final_dir.mkdir(parents=True, exist_ok=True)
     
-    if model_name == "srgan":
-        # Save only generator for inference
-        torch.save(generator.state_dict(), final_dir / "final.pth")
-    else:
-        torch.save(model.state_dict(), final_dir / "final.pth")
+    ckpt_dir = Path(config["output"]["checkpoint_dir"])
+    best_ckpt_path = ckpt_dir / "best_model.pth"
+    
+    final_sd = None
+    if best_ckpt_path.exists():
+        try:
+            ckpt_data = torch.load(best_ckpt_path, map_location="cpu", weights_only=False)
+            if "model_state_dict" in ckpt_data:
+                final_sd = ckpt_data["model_state_dict"]
+            elif "generator_state_dict" in ckpt_data:
+                final_sd = ckpt_data["generator_state_dict"]
+            logger.info(f"Loaded best checkpoint weights from {best_ckpt_path} for final deployment")
+        except Exception as e:
+            logger.warning(f"Could not load best_model.pth, falling back to final training state: {e}")
+
+    if final_sd is None:
+        if model_name == "srgan":
+            final_sd = generator.state_dict()
+        else:
+            final_sd = model.state_dict()
+
+    target_m = generator if model_name == "srgan" else model
+    if ("srresnet" in model_name.lower() or "srgan" in model_name.lower()) and getattr(target_m, "use_batchnorm", True) is False:
+        from models.srresnet import fold_srresnet_bn
+        final_sd = fold_srresnet_bn(final_sd)
         
-    logger.info(f"Saved final {model_name} weights to {final_dir / 'final.pth'}")
+    torch.save(final_sd, final_dir / "final.pth")
+    logger.info(f"Saved optimized final {model_name} weights to {final_dir / 'final.pth'}")
 
 
 def main():

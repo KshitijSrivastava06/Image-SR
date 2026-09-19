@@ -199,3 +199,27 @@ class Trainer:
         if "epoch" in checkpoint:
             self.start_epoch = checkpoint["epoch"] + 1
         logger.info(f"Resuming from epoch {self.start_epoch} with best PSNR {self.best_psnr:.2f}")
+
+    def save_best_weights(self, export_path: str | Path) -> bool:
+        """
+        Export the best model state dict directly to a standalone weight file for inference.
+        If best_model.pth exists, loads its weights. Otherwise uses the current model state.
+        Folds BatchNorm if model is BN-free.
+        """
+        export_path = Path(export_path)
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+        best_path = self.checkpoint_dir / "best_model.pth"
+        if best_path.exists():
+            ckpt = torch.load(best_path, map_location="cpu", weights_only=False)
+            sd = ckpt.get("model_state_dict", self.model.state_dict())
+        else:
+            sd = self.model.state_dict()
+            
+        if getattr(self.model, "use_batchnorm", True) is False:
+            from models.srresnet import fold_srresnet_bn
+            sd = fold_srresnet_bn(sd)
+            
+        torch.save(sd, export_path)
+        logger.info(f"Exported best weights to {export_path}")
+        return True
+

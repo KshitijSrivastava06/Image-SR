@@ -10,6 +10,20 @@ from src.utils.inference_utils import pad_to_mod, unpad
 logger = get_logger("tiled_inference")
 
 
+def supports_tiling(model: nn.Module) -> bool:
+    """
+    Check if a model is suitable for tiled inference.
+    
+    Models with BatchNorm layers (e.g. legacy SRResNet) often produce noticeable boundary
+    artifacts and color shifts when run patch-by-patch due to running statistics mismatch.
+    BN-free models (e.g. ESRGAN, SRCNN, BN-free SRResNet) are fully compatible.
+    """
+    for m in model.modules():
+        if isinstance(m, (nn.BatchNorm2d, nn.BatchNorm1d, nn.SyncBatchNorm)):
+            return False
+    return True
+
+
 @torch.no_grad()
 def tiled_forward(
     model: nn.Module, 

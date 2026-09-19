@@ -153,10 +153,16 @@ def load_pretrained(model_name: str, scale_factor: int, device: Optional[torch.d
     else:
         logger.warning(f"Could not download weights for {model_name}_x{scale_factor}. Trying local fallback.")
         local_name = model_name.replace("_generator", "")
-        local_path = Path(f"models/{local_name}/final.pth")
-        if local_path.exists():
-            logger.info(f"Loading local weights from {local_path}")
-            state_dict = torch.load(local_path, map_location="cpu", weights_only=True)
+        local_paths = [
+            Path(f"models/{local_name}/final.pth"),
+            Path(f"outputs/checkpoints/{local_name}/best_model.pth"),
+            Path(f"outputs/checkpoints/{local_name}/final.pth"),
+        ]
+        for lp in local_paths:
+            if lp.exists():
+                logger.info(f"Loading local weights from {lp}")
+                state_dict = torch.load(lp, map_location="cpu", weights_only=False)
+                break
             
     if state_dict is not None:
         if "state_dict" in state_dict:
@@ -170,6 +176,10 @@ def load_pretrained(model_name: str, scale_factor: int, device: Optional[torch.d
             
         if "esrgan" in model_name.lower() and weight_path and ("RRDB" in weight_path.name or "RealESRGAN" in weight_path.name):
             state_dict = remap_esrgan_keys(state_dict)
+
+        if ("srresnet" in model_name.lower() or "srgan" in model_name.lower()) and getattr(model, "use_batchnorm", True) is False:
+            from models.srresnet import fold_srresnet_bn
+            state_dict = fold_srresnet_bn(state_dict)
             
         try:
             model.load_state_dict(state_dict, strict=True)

@@ -41,7 +41,7 @@ from models.pretrained_weights import PRETRAINED_REGISTRY
 from src.restoration import RestorationPipeline
 from src.utils.common import tensor_to_numpy
 from src.utils.inference_utils import postprocess_output, prepare_input
-from src.utils.tiled_inference import tiled_forward
+from src.utils.tiled_inference import tiled_forward, supports_tiling
 from src.evaluation.metrics import MetricCalculator
 from src.restoration.post_processor import PostProcessor
 
@@ -535,9 +535,16 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     tile_size = config.get("tile_size", 256)
     tile_overlap = config.get("tile_overlap", 16)
     
-    # Automatically tile if the image is large and tile_size is specified
-    is_large_image = (original_image.width * original_image.height > 512 * 512)
-    use_tiling = tile_size > 0 and (is_large_image or config["model_name"].lower() in ("esrgan", "esrgan_generator"))
+    # Only use tiled inference if model supports it (no BatchNorm) and either:
+    # 1) Image is very large (> 1024x1024), or
+    # 2) Model is heavy (ESRGAN) where tile processing prevents GPU OOM
+    is_large_image = (original_image.width * original_image.height > 1024 * 1024)
+    model_is_esrgan = config["model_name"].lower() in ("esrgan", "esrgan_generator")
+    use_tiling = (
+        tile_size > 0 
+        and supports_tiling(model)
+        and (is_large_image or (model_is_esrgan and original_image.width * original_image.height > 512 * 512))
+    )
 
     if use_tiling:
         sr_tensor = tiled_forward(model, lr_tensor, tile_size=tile_size, overlap=tile_overlap, scale_factor=config["scale_factor"])
@@ -670,6 +677,8 @@ def _display_results(
             </div>""",
             unsafe_allow_html=True,
         )
+
+    st.caption("ℹ️ *PSNR and SSIM are calculated against a Bicubic upscale of the input image (no ground-truth HR image is available). Perceptually sharper models like SRGAN/ESRGAN add realistic high-frequency textures that naturally diverge from smooth bicubic baseline.*")
 
     st.markdown("")
 
