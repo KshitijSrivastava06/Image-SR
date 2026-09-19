@@ -122,18 +122,22 @@ def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dic
     2. No NaNs or Infs
     3. Output values are within [0, 1] range
     4. Non-trivial spatial variance (output is not a solid blank color)
+    5. No extreme saturation on high-brightness inputs
     """
     device = next(model.parameters(), torch.tensor([])).device if list(model.parameters()) else torch.device("cpu")
     dummy = torch.rand(1, 3, 32, 32, device=device)
+    dummy_bright = torch.full((1, 3, 32, 32), 0.95, device=device)
     
     with torch.no_grad():
         out = model(dummy)
+        out_bright = model(dummy_bright)
         
-    has_nan = torch.isnan(out).any().item()
-    has_inf = torch.isinf(out).any().item()
-    val_min = out.min().item()
-    val_max = out.max().item()
+    has_nan = torch.isnan(out).any().item() or torch.isnan(out_bright).any().item()
+    has_inf = torch.isinf(out).any().item() or torch.isinf(out_bright).any().item()
+    val_min = min(out.min().item(), out_bright.min().item())
+    val_max = max(out.max().item(), out_bright.max().item())
     val_std = out.std().item()
+    val_std_bright = out_bright.std().item()
     
     is_valid = (
         not has_nan 
@@ -141,6 +145,7 @@ def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dic
         and val_min >= -0.05 
         and val_max <= 1.05 
         and val_std > 0.01
+        and val_std_bright > 0.0
     )
     
     return {
@@ -150,5 +155,6 @@ def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dic
         "min": val_min,
         "max": val_max,
         "std": val_std,
+        "std_bright": val_std_bright,
     }
 

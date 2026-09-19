@@ -34,9 +34,10 @@ class ResidualBlock(nn.Module):
         use_batchnorm: If True, include BatchNorm layers. Defaults to False.
     """
 
-    def __init__(self, channels: int = 64, use_batchnorm: bool = False):
+    def __init__(self, channels: int = 64, use_batchnorm: bool = False, residual_clamp: Optional[float] = 4.0):
         super().__init__()
         self.use_batchnorm = use_batchnorm
+        self.residual_clamp = residual_clamp
         layers = [
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
         ]
@@ -50,7 +51,10 @@ class ResidualBlock(nn.Module):
         self.block = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x + self.block(x)
+        res = self.block(x)
+        if self.residual_clamp is not None:
+            res = res.clamp(-self.residual_clamp, self.residual_clamp)
+        return x + res
 
 
 class UpsampleBlock(nn.Module):
@@ -170,6 +174,7 @@ class SRResNet(nn.Module):
         num_residual_blocks: int = 16,
         scale_factor: int = 4,
         use_batchnorm: bool = False,
+        residual_clamp: Optional[float] = 4.0,
     ):
         super().__init__()
 
@@ -179,6 +184,7 @@ class SRResNet(nn.Module):
         self.scale_factor = scale_factor
         self.use_batchnorm = use_batchnorm
         self.num_residual_blocks = num_residual_blocks
+        self.residual_clamp = residual_clamp
 
         # Initial feature extraction
         self.initial = nn.Sequential(
@@ -188,7 +194,7 @@ class SRResNet(nn.Module):
 
         # Residual blocks
         self.residual_blocks = nn.Sequential(
-            *[ResidualBlock(num_channels, use_batchnorm=use_batchnorm) for _ in range(num_residual_blocks)]
+            *[ResidualBlock(num_channels, use_batchnorm=use_batchnorm, residual_clamp=residual_clamp) for _ in range(num_residual_blocks)]
         )
 
         # Post-residual convolution (before global skip)
@@ -233,6 +239,8 @@ class SRResNet(nn.Module):
         initial = self.initial(x)
         residual = self.residual_blocks(initial)
         residual = self.post_residual(residual)
+        if self.residual_clamp is not None:
+            residual = residual.clamp(-self.residual_clamp, self.residual_clamp)
         out = initial + residual  # global skip connection
         out = self.upsample(out)
         out = self.final(out)
