@@ -76,6 +76,13 @@ def load_sr_model(
         f"{size['total_params']:,} params, {size['size_mb']:.2f} MB"
     )
 
+    if name_lower != "bicubic":
+        validation = validate_model_weights(model, scale_factor=scale_factor)
+        if not validation["valid"]:
+            logger.warning(f"Model validation check failed for {model_name}: {validation}")
+        else:
+            logger.info(f"Model sanity validation passed for {model_name} (diff_from_bicubic: {validation.get('diff_from_bicubic', 0):.4f})")
+
     return model
 
 
@@ -138,6 +145,12 @@ def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dic
     val_max = max(out.max().item(), out_bright.max().item())
     val_std = out.std().item()
     val_std_bright = out_bright.std().item()
+
+    # Compare against bicubic baseline interpolation
+    bicubic_ref = torch.nn.functional.interpolate(
+        dummy, scale_factor=scale_factor, mode="bicubic", align_corners=False
+    ).clamp(0.0, 1.0)
+    diff_from_bicubic = (out - bicubic_ref).abs().mean().item()
     
     is_valid = (
         not has_nan 
@@ -156,5 +169,6 @@ def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dic
         "max": val_max,
         "std": val_std,
         "std_bright": val_std_bright,
+        "diff_from_bicubic": diff_from_bicubic,
     }
 

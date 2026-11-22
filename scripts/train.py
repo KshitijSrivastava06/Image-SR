@@ -3,9 +3,16 @@ Training entry point for Image Super-Resolution.
 Supports SRCNN, SRResNet, and SRGAN.
 """
 
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import argparse
 import yaml
-from pathlib import Path
 
 import torch
 import torch.optim as optim
@@ -98,14 +105,24 @@ def run_training(config_path: str, resume_path: str = None):
     if model_name == "srgan":
         generator = get_model("srgan_generator", **model_kwargs).to(device)
         if "generator_weights" in config["model"]:
-            ckpt = torch.load(config["model"]["generator_weights"], map_location=device)
-            # Support loading from best_model.pth or direct state_dict
-            state_dict = ckpt["model_state_dict"] if "model_state_dict" in ckpt else ckpt
-            if getattr(generator, "use_batchnorm", True) is False:
-                from models.srresnet import fold_srresnet_bn
-                state_dict = fold_srresnet_bn(state_dict)
-            generator.load_state_dict(state_dict)
-            logger.info(f"Loaded generator warm-start weights from {config['model']['generator_weights']}")
+            weights_target = Path(config["model"]["generator_weights"])
+            if not weights_target.exists():
+                fallback_target = Path("outputs/checkpoints/srresnet/best_model.pth")
+                if fallback_target.exists():
+                    logger.warning(f"Specified generator_weights '{weights_target}' not found. Falling back to '{fallback_target}'")
+                    weights_target = fallback_target
+                else:
+                    logger.warning(f"Generator warm-start weights '{weights_target}' not found. Training from scratch.")
+                    weights_target = None
+            if weights_target is not None:
+                ckpt = torch.load(weights_target, map_location=device, weights_only=False)
+                # Support loading from best_model.pth or direct state_dict
+                state_dict = ckpt.get("model_state_dict", ckpt.get("generator_state_dict", ckpt))
+                if getattr(generator, "use_batchnorm", True) is False:
+                    from models.srresnet import fold_srresnet_bn
+                    state_dict = fold_srresnet_bn(state_dict)
+                generator.load_state_dict(state_dict)
+                logger.info(f"Loaded generator warm-start weights from {weights_target}")
             
         discriminator = Discriminator().to(device)
         
@@ -178,40 +195,43 @@ def run_training(config_path: str, resume_path: str = None):
         trainer.load_checkpoint(resume_path)
         
     # 3. Train
-    trainer.train()
-    
-    # 4. Save Final Weights (Preferring Best Checkpoint over Last Epoch)
-    final_dir = Path(f"models/{model_name}")
-    final_dir.mkdir(parents=True, exist_ok=True)
-    
-    ckpt_dir = Path(config["output"]["checkpoint_dir"])
-    best_ckpt_path = ckpt_dir / "best_model.pth"
-    
-    final_sd = None
-    if best_ckpt_path.exists():
-        try:
-            ckpt_data = torch.load(best_ckpt_path, map_location="cpu", weights_only=False)
-            if "model_state_dict" in ckpt_data:
-                final_sd = ckpt_data["model_state_dict"]
-            elif "generator_state_dict" in ckpt_data:
-                final_sd = ckpt_data["generator_state_dict"]
-            logger.info(f"Loaded best checkpoint weights from {best_ckpt_path} for final deployment")
-        except Exception as e:
-            logger.warning(f"Could not load best_model.pth, falling back to final training state: {e}")
-
-    if final_sd is None:
-        if model_name == "srgan":
-            final_sd = generator.state_dict()
-        else:
-            final_sd = model.state_dict()
-
-    target_m = generator if model_name == "srgan" else model
-    if ("srresnet" in model_name.lower() or "srgan" in model_name.lower()) and getattr(target_m, "use_batchnorm", True) is False:
-        from models.srresnet import fold_srresnet_bn
-        final_sd = fold_srresnet_bn(final_sd)
+    try:
+        trainer.train()
+    except KeyboardInterrupt:
+        logger.warning(f"Training interrupted by user. Preserving best weights for {model_name}...")
+    finally:
+        # 4. Save Final Weights (Preferring Best Checkpoint over Last Epoch)
+        final_dir = Path(f"models/{model_name}")
+        final_dir.mkdir(parents=True, exist_ok=True)
         
-    torch.save(final_sd, final_dir / "final.pth")
-    logger.info(f"Saved optimized final {model_name} weights to {final_dir / 'final.pth'}")
+        ckpt_dir = Path(config["output"]["checkpoint_dir"])
+        best_ckpt_path = ckpt_dir / "best_model.pth"
+        
+        final_sd = None
+        if best_ckpt_path.exists():
+            try:
+                ckpt_data = torch.load(best_ckpt_path, map_location="cpu", weights_only=False)
+                if "model_state_dict" in ckpt_data:
+                    final_sd = ckpt_data["model_state_dict"]
+                elif "generator_state_dict" in ckpt_data:
+                    final_sd = ckpt_data["generator_state_dict"]
+                logger.info(f"Loaded best checkpoint weights from {best_ckpt_path} for final deployment")
+            except Exception as e:
+                logger.warning(f"Could not load best_model.pth, falling back to current state: {e}")
+
+        if final_sd is None:
+            if model_name == "srgan":
+                final_sd = generator.state_dict()
+            else:
+                final_sd = model.state_dict()
+
+        target_m = generator if model_name == "srgan" else model
+        if ("srresnet" in model_name.lower() or "srgan" in model_name.lower()) and getattr(target_m, "use_batchnorm", True) is False:
+            from models.srresnet import fold_srresnet_bn
+            final_sd = fold_srresnet_bn(final_sd)
+            
+        torch.save(final_sd, final_dir / "final.pth")
+        logger.info(f"Saved optimized final {model_name} weights to {final_dir / 'final.pth'}")
 
 
 def main():

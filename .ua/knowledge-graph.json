@@ -1,0 +1,3551 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "image-super-resolution",
+    "languages": [
+      "markdown",
+      "python",
+      "yaml"
+    ],
+    "frameworks": [
+      "PyTorch",
+      "Streamlit",
+      "OpenCV",
+      "NumPy"
+    ],
+    "description": "AI image super-resolution and restoration platform supporting Bicubic, SRCNN, SRResNet, SRGAN, and Real-ESRGAN with modular training, pre-restoration pipelines, and Streamlit dashboard.",
+    "analyzedAt": "2026-11-12T18:48:41.197373+00:00",
+    "gitCommitHash": "cfd70746b95a1c0019ec725c1f31f5aa47d531c5"
+  },
+  "nodes": [
+    {
+      "id": "file:app/model_loader.py",
+      "type": "file",
+      "name": "model_loader.py",
+      "filePath": "app/model_loader.py",
+      "summary": "Centralized model loader with caching, weight status checks, and output validation.",
+      "tags": [
+        "model-loader",
+        "inference",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/model_loader.py:load_sr_model",
+      "type": "function",
+      "name": "load_sr_model",
+      "filePath": "app/model_loader.py",
+      "lineRange": [
+        27,
+        86
+      ],
+      "summary": "Function `load_sr_model` in model_loader.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/model_loader.py:get_weight_status",
+      "type": "function",
+      "name": "get_weight_status",
+      "filePath": "app/model_loader.py",
+      "lineRange": [
+        94,
+        120
+      ],
+      "summary": "Function `get_weight_status` in model_loader.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:app/model_loader.py:validate_model_weights",
+      "type": "function",
+      "name": "validate_model_weights",
+      "filePath": "app/model_loader.py",
+      "lineRange": [
+        123,
+        173
+      ],
+      "summary": "Function `validate_model_weights` in model_loader.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "data/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/dataset_manager.py",
+      "type": "file",
+      "name": "dataset_manager.py",
+      "filePath": "data/dataset_manager.py",
+      "summary": "Dataset downloader and manager for DIV2K and standard super-resolution benchmarks.",
+      "tags": [
+        "dataset",
+        "data-loader",
+        "downloader"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:data/dataset_manager.py:DatasetDownloader",
+      "type": "class",
+      "name": "DatasetDownloader",
+      "filePath": "data/dataset_manager.py",
+      "lineRange": [
+        70,
+        188
+      ],
+      "summary": "Class `DatasetDownloader` in dataset_manager.py.",
+      "tags": [
+        "class",
+        "code",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/dataset_splitter.py",
+      "type": "file",
+      "name": "dataset_splitter.py",
+      "filePath": "data/dataset_splitter.py",
+      "summary": "Splits image datasets into training, validation, and test subsets.",
+      "tags": [
+        "dataset",
+        "preprocessing",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:data/dataset_splitter.py:split_dataset",
+      "type": "function",
+      "name": "split_dataset",
+      "filePath": "data/dataset_splitter.py",
+      "lineRange": [
+        16,
+        84
+      ],
+      "summary": "Function `split_dataset` in dataset_splitter.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/dataset_validator.py",
+      "type": "file",
+      "name": "dataset_validator.py",
+      "filePath": "data/dataset_validator.py",
+      "summary": "Validates image file integrity, color spaces, and resolution constraints.",
+      "tags": [
+        "dataset",
+        "validation",
+        "quality"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:data/dataset_validator.py:DatasetValidator",
+      "type": "class",
+      "name": "DatasetValidator",
+      "filePath": "data/dataset_validator.py",
+      "lineRange": [
+        22,
+        145
+      ],
+      "summary": "Class `DatasetValidator` in dataset_validator.py.",
+      "tags": [
+        "class",
+        "code",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:data/sr_dataset.py",
+      "type": "file",
+      "name": "sr_dataset.py",
+      "filePath": "data/sr_dataset.py",
+      "summary": "PyTorch Datasets for inference and evaluation on paired and unpaired image sets.",
+      "tags": [
+        "dataset",
+        "pytorch",
+        "data-loader"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:data/sr_dataset.py:InferenceDataset",
+      "type": "class",
+      "name": "InferenceDataset",
+      "filePath": "data/sr_dataset.py",
+      "lineRange": [
+        17,
+        65
+      ],
+      "summary": "Class `InferenceDataset` in sr_dataset.py.",
+      "tags": [
+        "class",
+        "code",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:data/sr_dataset.py:SRTestDataset",
+      "type": "class",
+      "name": "SRTestDataset",
+      "filePath": "data/sr_dataset.py",
+      "lineRange": [
+        68,
+        113
+      ],
+      "summary": "Class `SRTestDataset` in sr_dataset.py.",
+      "tags": [
+        "class",
+        "code",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:data/sr_train_dataset.py",
+      "type": "file",
+      "name": "sr_train_dataset.py",
+      "filePath": "data/sr_train_dataset.py",
+      "summary": "PyTorch Dataset for patch-based super-resolution training with dynamic augmentation and bicubic downsampling.",
+      "tags": [
+        "dataset",
+        "training",
+        "augmentation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:data/sr_train_dataset.py:DIV2KTrainDataset",
+      "type": "class",
+      "name": "DIV2KTrainDataset",
+      "filePath": "data/sr_train_dataset.py",
+      "lineRange": [
+        20,
+        117
+      ],
+      "summary": "Class `DIV2KTrainDataset` in sr_train_dataset.py.",
+      "tags": [
+        "class",
+        "code",
+        "data-model"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/benchmark.py",
+      "type": "file",
+      "name": "benchmark.py",
+      "filePath": "scripts/benchmark.py",
+      "summary": "Comprehensive benchmark tool calculating PSNR, SSIM, Delta-vs-Bicubic, and latency across datasets.",
+      "tags": [
+        "benchmark",
+        "evaluation",
+        "metrics",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/benchmark.py:evaluate_models",
+      "type": "function",
+      "name": "evaluate_models",
+      "filePath": "scripts/benchmark.py",
+      "lineRange": [
+        34,
+        190
+      ],
+      "summary": "Function `evaluate_models` in benchmark.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/benchmark.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/benchmark.py",
+      "lineRange": [
+        193,
+        208
+      ],
+      "summary": "Function `main` in benchmark.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/train.py",
+      "type": "file",
+      "name": "train.py",
+      "filePath": "scripts/train.py",
+      "summary": "Primary training entry point supporting single-model (SRCNN, SRResNet) and GAN training.",
+      "tags": [
+        "training",
+        "script",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/train.py:build_scheduler",
+      "type": "function",
+      "name": "build_scheduler",
+      "filePath": "scripts/train.py",
+      "lineRange": [
+        43,
+        56
+      ],
+      "summary": "Function `build_scheduler` in train.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/train.py:run_training",
+      "type": "function",
+      "name": "run_training",
+      "filePath": "scripts/train.py",
+      "lineRange": [
+        59,
+        234
+      ],
+      "summary": "Function `run_training` in train.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/train.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/train.py",
+      "lineRange": [
+        237,
+        244
+      ],
+      "summary": "Function `main` in train.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/logger.py",
+      "type": "file",
+      "name": "logger.py",
+      "filePath": "src/utils/logger.py",
+      "summary": "Standardized logging configuration with colored console output.",
+      "tags": [
+        "logging",
+        "utility",
+        "diagnostics"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/logger.py:get_logger",
+      "type": "function",
+      "name": "get_logger",
+      "filePath": "src/utils/logger.py",
+      "lineRange": [
+        16,
+        62
+      ],
+      "summary": "Function `get_logger` in logger.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/preprocessing.py",
+      "type": "file",
+      "name": "preprocessing.py",
+      "filePath": "src/utils/preprocessing.py",
+      "summary": "Mod-crop and image preprocessing utilities.",
+      "tags": [
+        "preprocessing",
+        "mod-crop",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/preprocessing.py:center_crop",
+      "type": "function",
+      "name": "center_crop",
+      "filePath": "src/utils/preprocessing.py",
+      "lineRange": [
+        28,
+        33
+      ],
+      "summary": "Function `center_crop` in preprocessing.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/preprocessing.py:mod_crop",
+      "type": "function",
+      "name": "mod_crop",
+      "filePath": "src/utils/preprocessing.py",
+      "lineRange": [
+        36,
+        41
+      ],
+      "summary": "Function `mod_crop` in preprocessing.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:models/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "models/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:models/__init__.py:get_model",
+      "type": "function",
+      "name": "get_model",
+      "filePath": "models/__init__.py",
+      "lineRange": [
+        34,
+        55
+      ],
+      "summary": "Function `get_model` in __init__.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:models/__init__.py:get_pretrained",
+      "type": "function",
+      "name": "get_pretrained",
+      "filePath": "models/__init__.py",
+      "lineRange": [
+        63,
+        77
+      ],
+      "summary": "Function `get_pretrained` in __init__.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:models/bicubic.py",
+      "type": "file",
+      "name": "bicubic.py",
+      "filePath": "models/bicubic.py",
+      "summary": "OpenCV and PyTorch bicubic interpolation baseline upsampler.",
+      "tags": [
+        "model",
+        "baseline",
+        "interpolation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/bicubic.py:BicubicUpsampler",
+      "type": "class",
+      "name": "BicubicUpsampler",
+      "filePath": "models/bicubic.py",
+      "lineRange": [
+        14,
+        58
+      ],
+      "summary": "Class `BicubicUpsampler` in bicubic.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:models/esrgan.py",
+      "type": "file",
+      "name": "esrgan.py",
+      "filePath": "models/esrgan.py",
+      "summary": "Enhanced SRGAN with Residual-in-Residual Dense Blocks (RRDB) and Relativistic average GAN (Wang et al., 2018).",
+      "tags": [
+        "model",
+        "esrgan",
+        "rrdb",
+        "state-of-the-art"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:models/esrgan.py:DenseBlock",
+      "type": "class",
+      "name": "DenseBlock",
+      "filePath": "models/esrgan.py",
+      "lineRange": [
+        21,
+        57
+      ],
+      "summary": "Class `DenseBlock` in esrgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:models/esrgan.py:RRDB",
+      "type": "class",
+      "name": "RRDB",
+      "filePath": "models/esrgan.py",
+      "lineRange": [
+        60,
+        89
+      ],
+      "summary": "Class `RRDB` in esrgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:models/esrgan.py:ESRGANGenerator",
+      "type": "class",
+      "name": "ESRGANGenerator",
+      "filePath": "models/esrgan.py",
+      "lineRange": [
+        92,
+        197
+      ],
+      "summary": "Class `ESRGANGenerator` in esrgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/esrgan.py:VGGStyleDiscriminator",
+      "type": "class",
+      "name": "VGGStyleDiscriminator",
+      "filePath": "models/esrgan.py",
+      "lineRange": [
+        200,
+        261
+      ],
+      "summary": "Class `VGGStyleDiscriminator` in esrgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/esrgan.py:ESRGAN",
+      "type": "class",
+      "name": "ESRGAN",
+      "filePath": "models/esrgan.py",
+      "lineRange": [
+        264,
+        332
+      ],
+      "summary": "Class `ESRGAN` in esrgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:models/pretrained_weights.py",
+      "type": "file",
+      "name": "pretrained_weights.py",
+      "filePath": "models/pretrained_weights.py",
+      "summary": "Pretrained weights registry, automatic checkpoint downloader, key remapping, and local fallbacks.",
+      "tags": [
+        "weights",
+        "downloader",
+        "checkpoint"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:models/pretrained_weights.py:download_file",
+      "type": "function",
+      "name": "download_file",
+      "filePath": "models/pretrained_weights.py",
+      "lineRange": [
+        68,
+        79
+      ],
+      "summary": "Function `download_file` in pretrained_weights.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:models/pretrained_weights.py:download_pretrained",
+      "type": "function",
+      "name": "download_pretrained",
+      "filePath": "models/pretrained_weights.py",
+      "lineRange": [
+        82,
+        101
+      ],
+      "summary": "Function `download_pretrained` in pretrained_weights.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:models/pretrained_weights.py:remap_esrgan_keys",
+      "type": "function",
+      "name": "remap_esrgan_keys",
+      "filePath": "models/pretrained_weights.py",
+      "lineRange": [
+        104,
+        140
+      ],
+      "summary": "Function `remap_esrgan_keys` in pretrained_weights.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:models/pretrained_weights.py:load_pretrained",
+      "type": "function",
+      "name": "load_pretrained",
+      "filePath": "models/pretrained_weights.py",
+      "lineRange": [
+        143,
+        218
+      ],
+      "summary": "Function `load_pretrained` in pretrained_weights.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:models/srcnn.py",
+      "type": "file",
+      "name": "srcnn.py",
+      "filePath": "models/srcnn.py",
+      "summary": "3-layer Super-Resolution Convolutional Neural Network (Dong et al., 2014).",
+      "tags": [
+        "model",
+        "srcnn",
+        "cnn",
+        "baseline"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/srcnn.py:SRCNN",
+      "type": "class",
+      "name": "SRCNN",
+      "filePath": "models/srcnn.py",
+      "lineRange": [
+        19,
+        97
+      ],
+      "summary": "Class `SRCNN` in srcnn.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:models/srgan.py",
+      "type": "file",
+      "name": "srgan.py",
+      "filePath": "models/srgan.py",
+      "summary": "VGG-style discriminator and SRGAN adversarial network architecture (Ledig et al., 2017).",
+      "tags": [
+        "model",
+        "srgan",
+        "gan",
+        "discriminator"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:models/srgan.py:_conv_block",
+      "type": "function",
+      "name": "_conv_block",
+      "filePath": "models/srgan.py",
+      "lineRange": [
+        21,
+        27
+      ],
+      "summary": "Function `_conv_block` in srgan.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:models/srgan.py:Discriminator",
+      "type": "class",
+      "name": "Discriminator",
+      "filePath": "models/srgan.py",
+      "lineRange": [
+        34,
+        94
+      ],
+      "summary": "Class `Discriminator` in srgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/srgan.py:SRGANGenerator",
+      "type": "class",
+      "name": "SRGANGenerator",
+      "filePath": "models/srgan.py",
+      "lineRange": [
+        101,
+        106
+      ],
+      "summary": "Class `SRGANGenerator` in srgan.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:models/srresnet.py",
+      "type": "file",
+      "name": "srresnet.py",
+      "filePath": "models/srresnet.py",
+      "summary": "16-block Deep Residual Network for super-resolution with PixelShuffle upsampling and BatchNorm folding.",
+      "tags": [
+        "model",
+        "srresnet",
+        "resnet",
+        "generator"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:models/srresnet.py:fold_srresnet_bn",
+      "type": "function",
+      "name": "fold_srresnet_bn",
+      "filePath": "models/srresnet.py",
+      "lineRange": [
+        79,
+        155
+      ],
+      "summary": "Function `fold_srresnet_bn` in srresnet.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:models/srresnet.py:ResidualBlock",
+      "type": "class",
+      "name": "ResidualBlock",
+      "filePath": "models/srresnet.py",
+      "lineRange": [
+        28,
+        57
+      ],
+      "summary": "Class `ResidualBlock` in srresnet.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:models/srresnet.py:UpsampleBlock",
+      "type": "class",
+      "name": "UpsampleBlock",
+      "filePath": "models/srresnet.py",
+      "lineRange": [
+        60,
+        76
+      ],
+      "summary": "Class `UpsampleBlock` in srresnet.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:models/srresnet.py:SRResNet",
+      "type": "class",
+      "name": "SRResNet",
+      "filePath": "models/srresnet.py",
+      "lineRange": [
+        158,
+        247
+      ],
+      "summary": "Class `SRResNet` in srresnet.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/verify.py",
+      "type": "file",
+      "name": "verify.py",
+      "filePath": "scripts/verify.py",
+      "summary": "Automated test suite verifying model forward passes, metrics, and restoration pipelines.",
+      "tags": [
+        "test",
+        "verification",
+        "ci"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/evaluation/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/evaluation/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/evaluation/benchmark.py",
+      "type": "file",
+      "name": "benchmark.py",
+      "filePath": "src/evaluation/benchmark.py",
+      "summary": "Multi-model benchmark runner collecting performance statistics.",
+      "tags": [
+        "benchmark",
+        "runner",
+        "statistics"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/evaluation/benchmark.py:BenchmarkRunner",
+      "type": "class",
+      "name": "BenchmarkRunner",
+      "filePath": "src/evaluation/benchmark.py",
+      "lineRange": [
+        25,
+        189
+      ],
+      "summary": "Class `BenchmarkRunner` in benchmark.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/evaluation/evaluator.py",
+      "type": "file",
+      "name": "evaluator.py",
+      "filePath": "src/evaluation/evaluator.py",
+      "summary": "Batch model evaluator on benchmark test datasets.",
+      "tags": [
+        "evaluation",
+        "benchmark",
+        "testing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/evaluation/evaluator.py:ModelEvaluator",
+      "type": "class",
+      "name": "ModelEvaluator",
+      "filePath": "src/evaluation/evaluator.py",
+      "lineRange": [
+        24,
+        172
+      ],
+      "summary": "Class `ModelEvaluator` in evaluator.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/evaluation/metrics.py",
+      "type": "file",
+      "name": "metrics.py",
+      "filePath": "src/evaluation/metrics.py",
+      "summary": "Metric calculator computing PSNR, SSIM, and LPIPS perceptual similarity.",
+      "tags": [
+        "metrics",
+        "evaluation",
+        "psnr",
+        "ssim"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/evaluation/metrics.py:MetricCalculator",
+      "type": "class",
+      "name": "MetricCalculator",
+      "filePath": "src/evaluation/metrics.py",
+      "lineRange": [
+        15,
+        178
+      ],
+      "summary": "Class `MetricCalculator` in metrics.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/evaluation/visualizer.py",
+      "type": "file",
+      "name": "visualizer.py",
+      "filePath": "src/evaluation/visualizer.py",
+      "summary": "Generates comparison crops and visual side-by-side grids.",
+      "tags": [
+        "visualization",
+        "plotting",
+        "comparison"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/evaluation/visualizer.py:plot_metric_comparison",
+      "type": "function",
+      "name": "plot_metric_comparison",
+      "filePath": "src/evaluation/visualizer.py",
+      "lineRange": [
+        23,
+        85
+      ],
+      "summary": "Function `plot_metric_comparison` in visualizer.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/evaluation/visualizer.py:create_side_by_side",
+      "type": "function",
+      "name": "create_side_by_side",
+      "filePath": "src/evaluation/visualizer.py",
+      "lineRange": [
+        88,
+        119
+      ],
+      "summary": "Function `create_side_by_side` in visualizer.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/evaluation/visualizer.py:create_zoom_comparison",
+      "type": "function",
+      "name": "create_zoom_comparison",
+      "filePath": "src/evaluation/visualizer.py",
+      "lineRange": [
+        122,
+        166
+      ],
+      "summary": "Function `create_zoom_comparison` in visualizer.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/evaluation/visualizer.py:plot_training_history",
+      "type": "function",
+      "name": "plot_training_history",
+      "filePath": "src/evaluation/visualizer.py",
+      "lineRange": [
+        169,
+        200
+      ],
+      "summary": "Function `plot_training_history` in visualizer.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/utils/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/common.py",
+      "type": "file",
+      "name": "common.py",
+      "filePath": "src/utils/common.py",
+      "summary": "Common helpers for device selection, tensor conversions, and model sizing.",
+      "tags": [
+        "utility",
+        "device",
+        "helpers"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/common.py:get_device",
+      "type": "function",
+      "name": "get_device",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        23,
+        29
+      ],
+      "summary": "Function `get_device` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/common.py:load_image",
+      "type": "function",
+      "name": "load_image",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        36,
+        53
+      ],
+      "summary": "Function `load_image` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/common.py:save_image",
+      "type": "function",
+      "name": "save_image",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        56,
+        87
+      ],
+      "summary": "Function `save_image` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/common.py:tensor_to_numpy",
+      "type": "function",
+      "name": "tensor_to_numpy",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        94,
+        106
+      ],
+      "summary": "Function `tensor_to_numpy` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/common.py:numpy_to_tensor",
+      "type": "function",
+      "name": "numpy_to_tensor",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        109,
+        124
+      ],
+      "summary": "Function `numpy_to_tensor` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/common.py:get_model_size",
+      "type": "function",
+      "name": "get_model_size",
+      "filePath": "src/utils/common.py",
+      "lineRange": [
+        131,
+        138
+      ],
+      "summary": "Function `get_model_size` in common.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/inference_db.py",
+      "type": "file",
+      "name": "inference_db.py",
+      "filePath": "src/utils/inference_db.py",
+      "summary": "SQLite database logger tracking model inference runs, latencies, and metrics.",
+      "tags": [
+        "database",
+        "sqlite",
+        "tracking"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/utils/inference_db.py:InferenceTracker",
+      "type": "class",
+      "name": "InferenceTracker",
+      "filePath": "src/utils/inference_db.py",
+      "lineRange": [
+        17,
+        99
+      ],
+      "summary": "Class `InferenceTracker` in inference_db.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/restoration/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/restoration/auto_detect.py",
+      "type": "file",
+      "name": "auto_detect.py",
+      "filePath": "src/restoration/auto_detect.py",
+      "summary": "Heuristic analyzer detecting blur, noise, and compression to recommend restoration presets.",
+      "tags": [
+        "analysis",
+        "heuristics",
+        "auto-detect"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/auto_detect.py:ImageQualityAnalyzer",
+      "type": "class",
+      "name": "ImageQualityAnalyzer",
+      "filePath": "src/restoration/auto_detect.py",
+      "lineRange": [
+        9,
+        93
+      ],
+      "summary": "Class `ImageQualityAnalyzer` in auto_detect.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/deblurrer.py",
+      "type": "file",
+      "name": "deblurrer.py",
+      "filePath": "src/restoration/deblurrer.py",
+      "summary": "Unsharp masking, Laplacian, and Wiener deconvolution image deblurring filters.",
+      "tags": [
+        "restoration",
+        "deblurring",
+        "sharpening"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/deblurrer.py:Deblurrer",
+      "type": "class",
+      "name": "Deblurrer",
+      "filePath": "src/restoration/deblurrer.py",
+      "lineRange": [
+        11,
+        124
+      ],
+      "summary": "Class `Deblurrer` in deblurrer.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/denoiser.py",
+      "type": "file",
+      "name": "denoiser.py",
+      "filePath": "src/restoration/denoiser.py",
+      "summary": "Non-Local Means, bilateral, and median filtering image denoisers.",
+      "tags": [
+        "restoration",
+        "denoising",
+        "filtering"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/restoration/denoiser.py:add_salt_pepper_noise",
+      "type": "function",
+      "name": "add_salt_pepper_noise",
+      "filePath": "src/restoration/denoiser.py",
+      "lineRange": [
+        96,
+        105
+      ],
+      "summary": "Function `add_salt_pepper_noise` in denoiser.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/restoration/denoiser.py:Denoiser",
+      "type": "class",
+      "name": "Denoiser",
+      "filePath": "src/restoration/denoiser.py",
+      "lineRange": [
+        12,
+        82
+      ],
+      "summary": "Class `Denoiser` in denoiser.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/enhancer.py",
+      "type": "file",
+      "name": "enhancer.py",
+      "filePath": "src/restoration/enhancer.py",
+      "summary": "Contrast-Limited Adaptive Histogram Equalization (CLAHE) and gamma correction.",
+      "tags": [
+        "restoration",
+        "contrast",
+        "enhancement"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/enhancer.py:ContrastEnhancer",
+      "type": "class",
+      "name": "ContrastEnhancer",
+      "filePath": "src/restoration/enhancer.py",
+      "lineRange": [
+        11,
+        104
+      ],
+      "summary": "Class `ContrastEnhancer` in enhancer.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/jpeg_deblock.py",
+      "type": "file",
+      "name": "jpeg_deblock.py",
+      "filePath": "src/restoration/jpeg_deblock.py",
+      "summary": "JPEG compression artifact reduction and deblocking filter.",
+      "tags": [
+        "restoration",
+        "deblocking",
+        "jpeg"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/jpeg_deblock.py:JPEGDeBlocker",
+      "type": "class",
+      "name": "JPEGDeBlocker",
+      "filePath": "src/restoration/jpeg_deblock.py",
+      "lineRange": [
+        14,
+        72
+      ],
+      "summary": "Class `JPEGDeBlocker` in jpeg_deblock.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/restoration/pipeline.py",
+      "type": "file",
+      "name": "pipeline.py",
+      "filePath": "src/restoration/pipeline.py",
+      "summary": "Multi-stage pre-restoration pipeline combining deblocking, denoising, deblurring, and enhancement.",
+      "tags": [
+        "restoration",
+        "pipeline",
+        "preprocessing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/pipeline.py:RestorationPipeline",
+      "type": "class",
+      "name": "RestorationPipeline",
+      "filePath": "src/restoration/pipeline.py",
+      "lineRange": [
+        25,
+        158
+      ],
+      "summary": "Class `RestorationPipeline` in pipeline.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/streamlit_app.py",
+      "type": "file",
+      "name": "streamlit_app.py",
+      "filePath": "app/streamlit_app.py",
+      "summary": "Main interactive Streamlit application supporting image upload, restoration filters, model inference, and before/after comparisons.",
+      "tags": [
+        "ui",
+        "streamlit",
+        "frontend",
+        "entry-point"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:app/streamlit_app.py:render_sidebar",
+      "type": "function",
+      "name": "render_sidebar",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        200,
+        353
+      ],
+      "summary": "Function `render_sidebar` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/streamlit_app.py:render_main",
+      "type": "function",
+      "name": "render_main",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        360,
+        377
+      ],
+      "summary": "Function `render_main` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:app/streamlit_app.py:render_enhance_tab",
+      "type": "function",
+      "name": "render_enhance_tab",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        380,
+        486
+      ],
+      "summary": "Function `render_enhance_tab` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/streamlit_app.py:_run_enhancement",
+      "type": "function",
+      "name": "_run_enhancement",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        490,
+        638
+      ],
+      "summary": "Function `_run_enhancement` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/streamlit_app.py:_display_results",
+      "type": "function",
+      "name": "_display_results",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        641,
+        737
+      ],
+      "summary": "Function `_display_results` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/streamlit_app.py:render_dashboard_tab",
+      "type": "function",
+      "name": "render_dashboard_tab",
+      "filePath": "app/streamlit_app.py",
+      "lineRange": [
+        744,
+        856
+      ],
+      "summary": "Function `render_dashboard_tab` in streamlit_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:app/utils.py",
+      "type": "file",
+      "name": "utils.py",
+      "filePath": "app/utils.py",
+      "summary": "Utility functions for image format conversions between PIL, NumPy, and PyTorch tensors.",
+      "tags": [
+        "utility",
+        "preprocessing",
+        "conversion"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:app/utils.py:tensor_to_pil",
+      "type": "function",
+      "name": "tensor_to_pil",
+      "filePath": "app/utils.py",
+      "lineRange": [
+        25,
+        30
+      ],
+      "summary": "Function `tensor_to_pil` in utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:app/utils.py:pil_to_tensor",
+      "type": "function",
+      "name": "pil_to_tensor",
+      "filePath": "app/utils.py",
+      "lineRange": [
+        33,
+        42
+      ],
+      "summary": "Function `pil_to_tensor` in utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:app/utils.py:format_metric",
+      "type": "function",
+      "name": "format_metric",
+      "filePath": "app/utils.py",
+      "lineRange": [
+        52,
+        63
+      ],
+      "summary": "Function `format_metric` in utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:app/utils.py:get_image_info",
+      "type": "function",
+      "name": "get_image_info",
+      "filePath": "app/utils.py",
+      "lineRange": [
+        66,
+        74
+      ],
+      "summary": "Function `get_image_info` in utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/restoration/post_processor.py",
+      "type": "file",
+      "name": "post_processor.py",
+      "filePath": "src/restoration/post_processor.py",
+      "summary": "Post-super-resolution refinement module applying micro-contrast sharpening and vibrance boost.",
+      "tags": [
+        "post-processing",
+        "refinement",
+        "sharpening"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/restoration/post_processor.py:PostProcessor",
+      "type": "class",
+      "name": "PostProcessor",
+      "filePath": "src/restoration/post_processor.py",
+      "lineRange": [
+        13,
+        72
+      ],
+      "summary": "Class `PostProcessor` in post_processor.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/utils/inference_utils.py",
+      "type": "file",
+      "name": "inference_utils.py",
+      "filePath": "src/utils/inference_utils.py",
+      "summary": "Input normalization, range scaling, and color space formatting for inference.",
+      "tags": [
+        "inference",
+        "normalization",
+        "color-space"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/inference_utils.py:prepare_input",
+      "type": "function",
+      "name": "prepare_input",
+      "filePath": "src/utils/inference_utils.py",
+      "lineRange": [
+        15,
+        47
+      ],
+      "summary": "Function `prepare_input` in inference_utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/inference_utils.py:postprocess_output",
+      "type": "function",
+      "name": "postprocess_output",
+      "filePath": "src/utils/inference_utils.py",
+      "lineRange": [
+        50,
+        69
+      ],
+      "summary": "Function `postprocess_output` in inference_utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/inference_utils.py:pad_to_mod",
+      "type": "function",
+      "name": "pad_to_mod",
+      "filePath": "src/utils/inference_utils.py",
+      "lineRange": [
+        72,
+        91
+      ],
+      "summary": "Function `pad_to_mod` in inference_utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/inference_utils.py:unpad",
+      "type": "function",
+      "name": "unpad",
+      "filePath": "src/utils/inference_utils.py",
+      "lineRange": [
+        94,
+        106
+      ],
+      "summary": "Function `unpad` in inference_utils.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/utils/tiled_inference.py",
+      "type": "file",
+      "name": "tiled_inference.py",
+      "filePath": "src/utils/tiled_inference.py",
+      "summary": "Memory-safe tiled inference engine with cosine blending for high-resolution images.",
+      "tags": [
+        "inference",
+        "tiling",
+        "memory-optimization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/tiled_inference.py:supports_tiling",
+      "type": "function",
+      "name": "supports_tiling",
+      "filePath": "src/utils/tiled_inference.py",
+      "lineRange": [
+        13,
+        24
+      ],
+      "summary": "Function `supports_tiling` in tiled_inference.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/tiled_inference.py:tiled_forward",
+      "type": "function",
+      "name": "tiled_forward",
+      "filePath": "src/utils/tiled_inference.py",
+      "lineRange": [
+        28,
+        122
+      ],
+      "summary": "Function `tiled_forward` in tiled_inference.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/tiled_inference.py:_generate_blend_mask",
+      "type": "function",
+      "name": "_generate_blend_mask",
+      "filePath": "src/utils/tiled_inference.py",
+      "lineRange": [
+        125,
+        141
+      ],
+      "summary": "Function `_generate_blend_mask` in tiled_inference.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/training/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/training/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/training/gan_trainer.py",
+      "type": "file",
+      "name": "gan_trainer.py",
+      "filePath": "src/training/gan_trainer.py",
+      "summary": "Specialized GAN trainer with alternating generator/discriminator optimization and multi-loss balancing.",
+      "tags": [
+        "training",
+        "gan",
+        "adversarial"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/training/gan_trainer.py:GANTrainer",
+      "type": "class",
+      "name": "GANTrainer",
+      "filePath": "src/training/gan_trainer.py",
+      "lineRange": [
+        21,
+        224
+      ],
+      "summary": "Class `GANTrainer` in gan_trainer.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/training/losses.py",
+      "type": "file",
+      "name": "losses.py",
+      "filePath": "src/training/losses.py",
+      "summary": "Loss functions: L1/MSE pixel loss, VGG-19 perceptual feature loss, and BCE adversarial loss.",
+      "tags": [
+        "loss",
+        "perceptual",
+        "vgg",
+        "adversarial"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/training/losses.py:PixelLoss",
+      "type": "class",
+      "name": "PixelLoss",
+      "filePath": "src/training/losses.py",
+      "lineRange": [
+        11,
+        28
+      ],
+      "summary": "Class `PixelLoss` in losses.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/training/losses.py:VGGPerceptualLoss",
+      "type": "class",
+      "name": "VGGPerceptualLoss",
+      "filePath": "src/training/losses.py",
+      "lineRange": [
+        31,
+        63
+      ],
+      "summary": "Class `VGGPerceptualLoss` in losses.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/training/losses.py:AdversarialLoss",
+      "type": "class",
+      "name": "AdversarialLoss",
+      "filePath": "src/training/losses.py",
+      "lineRange": [
+        66,
+        85
+      ],
+      "summary": "Class `AdversarialLoss` in losses.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/training/losses.py:TVLoss",
+      "type": "class",
+      "name": "TVLoss",
+      "filePath": "src/training/losses.py",
+      "lineRange": [
+        88,
+        110
+      ],
+      "summary": "Class `TVLoss` in losses.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/training/trainer.py",
+      "type": "file",
+      "name": "trainer.py",
+      "filePath": "src/training/trainer.py",
+      "summary": "Standard PyTorch trainer for pixel-loss based models with mixed-precision, early stopping, and validation.",
+      "tags": [
+        "training",
+        "trainer",
+        "pytorch"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/training/trainer.py:Trainer",
+      "type": "class",
+      "name": "Trainer",
+      "filePath": "src/training/trainer.py",
+      "lineRange": [
+        21,
+        224
+      ],
+      "summary": "Class `Trainer` in trainer.py.",
+      "tags": [
+        "class",
+        "code",
+        "architecture"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Overview of the Deep Learning Image Super-Resolution and Restoration Platform.",
+      "tags": [
+        "documentation",
+        "overview",
+        "entry-point"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:TECHNICAL_DEEP_DIVE.md",
+      "type": "document",
+      "name": "TECHNICAL_DEEP_DIVE.md",
+      "filePath": "TECHNICAL_DEEP_DIVE.md",
+      "summary": "Technical documentation detailing mathematical formulations, network architectures, and benchmarks.",
+      "tags": [
+        "documentation",
+        "architecture",
+        "analysis"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "config:configs/inference.yaml",
+      "type": "config",
+      "name": "inference.yaml",
+      "filePath": "configs/inference.yaml",
+      "summary": "Configuration settings for model inference, default architecture, tiling, and GPU parameters.",
+      "tags": [
+        "configuration",
+        "inference",
+        "yaml"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:configs/train_srcnn.yaml",
+      "type": "config",
+      "name": "train_srcnn.yaml",
+      "filePath": "configs/train_srcnn.yaml",
+      "summary": "Training configuration for SRCNN model (epochs, optimizer, cosine scheduler, MSE loss).",
+      "tags": [
+        "configuration",
+        "training",
+        "srcnn"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:configs/train_srgan.yaml",
+      "type": "config",
+      "name": "train_srgan.yaml",
+      "filePath": "configs/train_srgan.yaml",
+      "summary": "Adversarial training configuration for SRGAN (generator warm-start, VGG perceptual loss, discriminator).",
+      "tags": [
+        "configuration",
+        "training",
+        "srgan"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:configs/train_srresnet.yaml",
+      "type": "config",
+      "name": "train_srresnet.yaml",
+      "filePath": "configs/train_srresnet.yaml",
+      "summary": "Training configuration for SRResNet generator (residual clamp, cosine scheduler, L1 loss).",
+      "tags": [
+        "configuration",
+        "training",
+        "srresnet"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:docs/PHASE_1_REPORT.md",
+      "type": "document",
+      "name": "PHASE_1_REPORT.md",
+      "filePath": "docs/PHASE_1_REPORT.md",
+      "summary": "Provides implementation and components for PHASE_1_REPORT.md.",
+      "tags": [
+        "utility",
+        "docs",
+        "component"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:run_app.py",
+      "type": "file",
+      "name": "run_app.py",
+      "filePath": "run_app.py",
+      "summary": "Entry point script to launch the Streamlit super-resolution web application.",
+      "tags": [
+        "entry-point",
+        "runner",
+        "streamlit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:run_app.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "run_app.py",
+      "lineRange": [
+        5,
+        26
+      ],
+      "summary": "Function `main` in run_app.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/train_all.py",
+      "type": "file",
+      "name": "train_all.py",
+      "filePath": "scripts/train_all.py",
+      "summary": "Sequential training pipeline orchestrator for SRCNN, SRResNet, and SRGAN.",
+      "tags": [
+        "orchestrator",
+        "pipeline",
+        "script"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/train_all.py:run_training",
+      "type": "function",
+      "name": "run_training",
+      "filePath": "scripts/train_all.py",
+      "lineRange": [
+        6,
+        39
+      ],
+      "summary": "Function `run_training` in train_all.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/train_all.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/train_all.py",
+      "lineRange": [
+        42,
+        59
+      ],
+      "summary": "Function `main` in train_all.py.",
+      "tags": [
+        "function",
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/__init__.py",
+      "summary": "Provides implementation and components for __init__.py.",
+      "tags": [
+        "utility",
+        "code",
+        "component"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:app/model_loader.py",
+      "target": "function:app/model_loader.py:load_sr_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/model_loader.py",
+      "target": "function:app/model_loader.py:get_weight_status",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/model_loader.py",
+      "target": "function:app/model_loader.py:validate_model_weights",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/model_loader.py",
+      "target": "file:models/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/model_loader.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/model_loader.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:data/dataset_manager.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:data/dataset_splitter.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:data/dataset_validator.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:data/sr_dataset.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:data/sr_train_dataset.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/__init__.py",
+      "target": "file:src/utils/preprocessing.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/dataset_manager.py",
+      "target": "class:data/dataset_manager.py:DatasetDownloader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/dataset_manager.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/dataset_splitter.py",
+      "target": "function:data/dataset_splitter.py:split_dataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/dataset_splitter.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/dataset_validator.py",
+      "target": "class:data/dataset_validator.py:DatasetValidator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/dataset_validator.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/sr_dataset.py",
+      "target": "class:data/sr_dataset.py:InferenceDataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/sr_dataset.py",
+      "target": "class:data/sr_dataset.py:SRTestDataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/sr_dataset.py",
+      "target": "file:src/utils/preprocessing.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:data/sr_train_dataset.py",
+      "target": "class:data/sr_train_dataset.py:DIV2KTrainDataset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:data/sr_train_dataset.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "function:scripts/benchmark.py:evaluate_models",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "function:scripts/benchmark.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "file:app/model_loader.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/benchmark.py",
+      "target": "file:src/utils/preprocessing.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "function:scripts/train.py:build_scheduler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "function:scripts/train.py:run_training",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "function:scripts/train.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:data/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:data/dataset_manager.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:models/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:models/srgan.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:src/training/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/logger.py",
+      "target": "function:src/utils/logger.py:get_logger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/preprocessing.py",
+      "target": "function:src/utils/preprocessing.py:center_crop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/preprocessing.py",
+      "target": "function:src/utils/preprocessing.py:mod_crop",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/preprocessing.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "function:models/__init__.py:get_model",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "function:models/__init__.py:get_pretrained",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "file:models/bicubic.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "file:models/esrgan.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "file:models/srcnn.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "file:models/srgan.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/__init__.py",
+      "target": "file:models/srresnet.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/bicubic.py",
+      "target": "class:models/bicubic.py:BicubicUpsampler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/esrgan.py",
+      "target": "class:models/esrgan.py:DenseBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/esrgan.py",
+      "target": "class:models/esrgan.py:RRDB",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/esrgan.py",
+      "target": "class:models/esrgan.py:ESRGANGenerator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/esrgan.py",
+      "target": "class:models/esrgan.py:VGGStyleDiscriminator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/esrgan.py",
+      "target": "class:models/esrgan.py:ESRGAN",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "function:models/pretrained_weights.py:download_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "function:models/pretrained_weights.py:download_pretrained",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "function:models/pretrained_weights.py:remap_esrgan_keys",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "function:models/pretrained_weights.py:load_pretrained",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "file:models/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/pretrained_weights.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/srcnn.py",
+      "target": "class:models/srcnn.py:SRCNN",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srgan.py",
+      "target": "function:models/srgan.py:_conv_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srgan.py",
+      "target": "class:models/srgan.py:Discriminator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srgan.py",
+      "target": "class:models/srgan.py:SRGANGenerator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srgan.py",
+      "target": "file:models/srresnet.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:models/srresnet.py",
+      "target": "function:models/srresnet.py:fold_srresnet_bn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srresnet.py",
+      "target": "class:models/srresnet.py:ResidualBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srresnet.py",
+      "target": "class:models/srresnet.py:UpsampleBlock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:models/srresnet.py",
+      "target": "class:models/srresnet.py:SRResNet",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:models/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:models/esrgan.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:models/srgan.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:src/restoration/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/verify.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/__init__.py",
+      "target": "file:src/evaluation/benchmark.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/__init__.py",
+      "target": "file:src/evaluation/evaluator.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/__init__.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/__init__.py",
+      "target": "file:src/evaluation/visualizer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/benchmark.py",
+      "target": "class:src/evaluation/benchmark.py:BenchmarkRunner",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/benchmark.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/benchmark.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/benchmark.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/evaluator.py",
+      "target": "class:src/evaluation/evaluator.py:ModelEvaluator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/evaluator.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/evaluator.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/evaluator.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/metrics.py",
+      "target": "class:src/evaluation/metrics.py:MetricCalculator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "function:src/evaluation/visualizer.py:plot_metric_comparison",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "function:src/evaluation/visualizer.py:create_side_by_side",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "function:src/evaluation/visualizer.py:create_zoom_comparison",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "function:src/evaluation/visualizer.py:plot_training_history",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/evaluation/visualizer.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/__init__.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/__init__.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:get_device",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:load_image",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:save_image",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:tensor_to_numpy",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:numpy_to_tensor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/common.py",
+      "target": "function:src/utils/common.py:get_model_size",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_db.py",
+      "target": "class:src/utils/inference_db.py:InferenceTracker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_db.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/inference_db.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/auto_detect.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/deblurrer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/denoiser.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/enhancer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/jpeg_deblock.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/__init__.py",
+      "target": "file:src/restoration/pipeline.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/auto_detect.py",
+      "target": "class:src/restoration/auto_detect.py:ImageQualityAnalyzer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/deblurrer.py",
+      "target": "class:src/restoration/deblurrer.py:Deblurrer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/denoiser.py",
+      "target": "function:src/restoration/denoiser.py:add_salt_pepper_noise",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/denoiser.py",
+      "target": "class:src/restoration/denoiser.py:Denoiser",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/enhancer.py",
+      "target": "class:src/restoration/enhancer.py:ContrastEnhancer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/jpeg_deblock.py",
+      "target": "class:src/restoration/jpeg_deblock.py:JPEGDeBlocker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "class:src/restoration/pipeline.py:RestorationPipeline",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/restoration/deblurrer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/restoration/denoiser.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/restoration/enhancer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/restoration/jpeg_deblock.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/restoration/pipeline.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:render_sidebar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:render_main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:render_enhance_tab",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:_run_enhancement",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:_display_results",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "function:app/streamlit_app.py:render_dashboard_tab",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:app/model_loader.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:app/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:models/pretrained_weights.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/restoration/__init__.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/restoration/post_processor.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/utils/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/utils/inference_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/utils/preprocessing.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/streamlit_app.py",
+      "target": "file:src/utils/tiled_inference.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:app/utils.py",
+      "target": "function:app/utils.py:tensor_to_pil",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/utils.py",
+      "target": "function:app/utils.py:pil_to_tensor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/utils.py",
+      "target": "function:app/utils.py:format_metric",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:app/utils.py",
+      "target": "function:app/utils.py:get_image_info",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/restoration/post_processor.py",
+      "target": "class:src/restoration/post_processor.py:PostProcessor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_utils.py",
+      "target": "function:src/utils/inference_utils.py:prepare_input",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_utils.py",
+      "target": "function:src/utils/inference_utils.py:postprocess_output",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_utils.py",
+      "target": "function:src/utils/inference_utils.py:pad_to_mod",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_utils.py",
+      "target": "function:src/utils/inference_utils.py:unpad",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/inference_utils.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/tiled_inference.py",
+      "target": "function:src/utils/tiled_inference.py:supports_tiling",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/tiled_inference.py",
+      "target": "function:src/utils/tiled_inference.py:tiled_forward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/tiled_inference.py",
+      "target": "function:src/utils/tiled_inference.py:_generate_blend_mask",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/utils/tiled_inference.py",
+      "target": "file:src/utils/inference_utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/utils/tiled_inference.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/__init__.py",
+      "target": "file:src/training/gan_trainer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/__init__.py",
+      "target": "file:src/training/losses.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/__init__.py",
+      "target": "file:src/training/trainer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/gan_trainer.py",
+      "target": "class:src/training/gan_trainer.py:GANTrainer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/gan_trainer.py",
+      "target": "file:src/training/losses.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/gan_trainer.py",
+      "target": "file:src/training/trainer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/gan_trainer.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/losses.py",
+      "target": "class:src/training/losses.py:PixelLoss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/losses.py",
+      "target": "class:src/training/losses.py:VGGPerceptualLoss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/losses.py",
+      "target": "class:src/training/losses.py:AdversarialLoss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/losses.py",
+      "target": "class:src/training/losses.py:TVLoss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/trainer.py",
+      "target": "class:src/training/trainer.py:Trainer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/training/trainer.py",
+      "target": "file:src/evaluation/metrics.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/training/trainer.py",
+      "target": "file:src/utils/logger.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:app/streamlit_app.py",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:configs/inference.yaml",
+      "target": "file:app/model_loader.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:configs/train_srcnn.yaml",
+      "target": "file:scripts/train.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:configs/train_srgan.yaml",
+      "target": "file:scripts/train.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:configs/train_srresnet.yaml",
+      "target": "file:scripts/train.py",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:run_app.py",
+      "target": "function:run_app.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_all.py",
+      "target": "function:scripts/train_all.py:run_training",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_all.py",
+      "target": "function:scripts/train_all.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:application-ui",
+      "name": "Presentation & Web UI",
+      "description": "Interactive Streamlit frontend, application entry points, and format converters.",
+      "nodeIds": [
+        "file:app/streamlit_app.py",
+        "file:app/utils.py",
+        "file:run_app.py"
+      ]
+    },
+    {
+      "id": "layer:models-super-resolution",
+      "name": "Super-Resolution Models",
+      "description": "Deep learning super-resolution architectures (SRCNN, SRResNet, SRGAN, ESRGAN) and model loader.",
+      "nodeIds": [
+        "file:app/model_loader.py",
+        "file:models/__init__.py",
+        "file:models/bicubic.py",
+        "file:models/esrgan.py",
+        "file:models/pretrained_weights.py",
+        "file:models/srcnn.py",
+        "file:models/srgan.py",
+        "file:models/srresnet.py"
+      ]
+    },
+    {
+      "id": "layer:restoration-pipeline",
+      "name": "Restoration & Image Processing",
+      "description": "Modular image enhancement pipeline (denoising, deblurring, contrast, JPEG deblocking, auto-detect).",
+      "nodeIds": [
+        "file:src/restoration/__init__.py",
+        "file:src/restoration/auto_detect.py",
+        "file:src/restoration/deblurrer.py",
+        "file:src/restoration/denoiser.py",
+        "file:src/restoration/enhancer.py",
+        "file:src/restoration/jpeg_deblock.py",
+        "file:src/restoration/pipeline.py",
+        "file:src/restoration/post_processor.py"
+      ]
+    },
+    {
+      "id": "layer:training-optimization",
+      "name": "Training & GAN Optimization",
+      "description": "PyTorch trainers, perceptual/adversarial loss functions, training scripts, and YAML configs.",
+      "nodeIds": [
+        "config:configs/train_srcnn.yaml",
+        "config:configs/train_srgan.yaml",
+        "config:configs/train_srresnet.yaml",
+        "file:scripts/train.py",
+        "file:scripts/train_all.py",
+        "file:src/training/__init__.py",
+        "file:src/training/gan_trainer.py",
+        "file:src/training/losses.py",
+        "file:src/training/trainer.py"
+      ]
+    },
+    {
+      "id": "layer:dataset-data-loader",
+      "name": "Data Ingestion & Augmentation",
+      "description": "Dataset management, dynamic patch cropping, mod-crop, and PyTorch DataLoaders.",
+      "nodeIds": [
+        "file:data/__init__.py",
+        "file:data/dataset_manager.py",
+        "file:data/dataset_splitter.py",
+        "file:data/dataset_validator.py",
+        "file:data/sr_dataset.py",
+        "file:data/sr_train_dataset.py"
+      ]
+    },
+    {
+      "id": "layer:evaluation-benchmarks",
+      "name": "Evaluation & Benchmarks",
+      "description": "Quantitative metrics (PSNR, SSIM, LPIPS), automated benchmark suite, and validation checks.",
+      "nodeIds": [
+        "file:scripts/benchmark.py",
+        "file:scripts/verify.py",
+        "file:src/evaluation/__init__.py",
+        "file:src/evaluation/benchmark.py",
+        "file:src/evaluation/evaluator.py",
+        "file:src/evaluation/metrics.py",
+        "file:src/evaluation/visualizer.py"
+      ]
+    },
+    {
+      "id": "layer:infrastructure-and-docs",
+      "name": "Infrastructure & Documentation",
+      "description": "Shared utilities, database tracking, logging, configurations, and documentation.",
+      "nodeIds": [
+        "config:configs/inference.yaml",
+        "document:README.md",
+        "document:TECHNICAL_DEEP_DIVE.md",
+        "document:docs/PHASE_1_REPORT.md",
+        "file:src/__init__.py",
+        "file:src/utils/__init__.py",
+        "file:src/utils/common.py",
+        "file:src/utils/inference_db.py",
+        "file:src/utils/inference_utils.py",
+        "file:src/utils/logger.py",
+        "file:src/utils/preprocessing.py",
+        "file:src/utils/tiled_inference.py"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Interactive User Experience & Pipeline Dashboard",
+      "description": "Start at the Streamlit frontend. It coordinates image uploading, real-time quality heuristics, model selection, live before/after comparisons, and output export.",
+      "nodeIds": [
+        "file:app/streamlit_app.py",
+        "file:app/utils.py"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Multi-Stage Pre-Restoration Pipeline",
+      "description": "Real-world inputs frequently contain compound degradations. The pre-restoration pipeline sequentially applies Non-Local Means denoising, unsharp deblurring, CLAHE contrast enhancement, and JPEG artifact deblocking prior to super-resolution.",
+      "nodeIds": [
+        "file:src/restoration/pipeline.py",
+        "file:src/restoration/denoiser.py",
+        "file:src/restoration/deblurrer.py",
+        "file:src/restoration/enhancer.py"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "Deep Residual Feature Learning (SRResNet)",
+      "description": "Explore the foundational deep residual architecture. It leverages 16 residual blocks with identity skips, PReLU activations, and PixelShuffle sub-pixel convolution upsampling for high mathematical fidelity.",
+      "nodeIds": [
+        "file:models/srresnet.py",
+        "class:models/srresnet.py:SRResNet",
+        "class:models/srresnet.py:ResidualBlock"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Adversarial Training & Perceptual Realism (SRGAN)",
+      "description": "Examine the generative adversarial formulation. SRGAN pairs the SRResNet generator with a VGG-style binary discriminator and optimizes a combined loss of pixel L1, VGG-19 perceptual features, and adversarial cross-entropy.",
+      "nodeIds": [
+        "file:models/srgan.py",
+        "class:models/srgan.py:Discriminator",
+        "file:src/training/losses.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Real-World SOTA Super-Resolution (Real-ESRGAN)",
+      "description": "Inspect the ESRGAN / Real-ESRGAN architecture. It removes Batch Normalization to eliminate tile artifacts, employs Residual-in-Residual Dense Blocks (RRDB), and integrates Relativistic average GAN (RaGAN) for photorealistic textures.",
+      "nodeIds": [
+        "file:models/esrgan.py",
+        "class:models/esrgan.py:ESRGANGenerator",
+        "class:models/esrgan.py:RRDB"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "Training Infrastructure & Loss Balancing",
+      "description": "Discover the modular training engine. Features automated mixed precision (AMP), gradient clipping, cosine annealing learning rate schedules, and resilient checkpoint saving.",
+      "nodeIds": [
+        "file:src/training/trainer.py",
+        "file:src/training/gan_trainer.py",
+        "file:scripts/train.py"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "Evaluation, Benchmarks & Quality Assurance",
+      "description": "Conclude with the quantitative verification framework. Benchmarks models across validation datasets, calculating PSNR vs HR, SSIM, Delta-vs-Bicubic baseline improvement, and inference latency.",
+      "nodeIds": [
+        "file:scripts/benchmark.py",
+        "file:src/evaluation/metrics.py",
+        "file:scripts/verify.py"
+      ]
+    }
+  ]
+}

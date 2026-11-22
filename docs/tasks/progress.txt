@@ -1,0 +1,34 @@
+# Project Progress Log: Image Super-Resolution Platform
+
+## Phase 1: Foundations, Baseline Architectures, Preprocessing & Prototyping
+Status: COMPLETED / REPORT FILED (See docs/PHASE_1_REPORT.md)
+
+- [x] End-to-end repository structure and configuration system (YAML)
+- [x] Dataset pipeline (DIV2K, Set5, Set14) with dynamic mod-crop and patch sampling
+- [x] Multi-stage pre-restoration pipeline (NLM Denoising, Unsharp Deblurring, CLAHE)
+- [x] Baseline implementations: Bicubic interpolation & SRCNN (Dong et al., 2014)
+- [x] Deep residual architecture: SRResNet with 16 residual blocks & PixelShuffle upsampling
+- [x] Memory-safe tiled inference engine with patch blending for gigapixel/4K images
+- [x] Critical diagnosis & fix: Unbounded Residual Compounding in SRResNet (+7.0 dB highlight recovery)
+- [x] Streamlit web application with interactive side-by-side magnification & live controls
+- [x] Quantitative evaluation framework (PSNR, SSIM, preliminary LPIPS)
+- [x] Phase 1 Progress Report compiled and documented
+
+---
+
+## Phase 2: Adversarial Training, Perceptual Realism & Production Benchmarking
+Status: IN PROGRESS (WIP)
+
+- [x] Pre-plan project state backup (810 MB snapshot + git branch `backup-pre-fix`)
+- [x] Model output quality diagnosis & root cause analysis (identified severe undertraining & BN alignment)
+- [x] Training configuration overhaul (SRResNet 300 ep / cosine / RAM cache; SRCNN 200 ep; SRGAN 150 ep)
+- [x] Model weight validation and sanity checks integrated into inference pipeline (`load_sr_model`)
+- [x] SRGAN weight loading & fallback export hardened (`models/srgan/final.pth`)
+- [x] Automated benchmark suite created (`scripts/benchmark.py`) with JSON/Markdown reporting
+- [ ] SRResNet full retraining (Phase 1 execution)
+- [ ] SRCNN full retraining (Phase 2 execution)
+- [ ] SRGAN joint adversarial retraining (Phase 3 execution)
+- [x] ESRGAN (RRDBNet) integration with Relativistic Average GAN (RaGAN) loss
+- [ ] Comprehensive benchmarking across Set5, Set14, BSD100, Urban100 datasets
+- [ ] Model export (ONNX runtime optimization) & deployment polish
+- [ ] Final project report & presentation

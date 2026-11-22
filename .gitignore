@@ -17,6 +17,9 @@ data/datasets/
 outputs/
 models/*/final.pth
 scratch/
+backups/
+*.bak
+.ua/.trash*
 test_run_results.md
 utils_cleanup_walkthrough.md
 walkthrough.md

@@ -1,0 +1,3517 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "cfd70746b95a1c0019ec725c1f31f5aa47d531c5",
+  "generatedAt": "2026-11-12T18:50:24.033Z",
+  "files": {
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "e3bff5f0c9ba5b99720424be660a4838007fbc84c74e0a9535e67dca00350dc5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 216,
+      "hasStructuralAnalysis": false
+    },
+    "TECHNICAL_DEEP_DIVE.md": {
+      "filePath": "TECHNICAL_DEEP_DIVE.md",
+      "contentHash": "a1d3a704fff441bb51ba0571ff08600995321f1fbd574460e6b7376a8ea769a0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 619,
+      "hasStructuralAnalysis": false
+    },
+    "app/model_loader.py": {
+      "filePath": "app/model_loader.py",
+      "contentHash": "061bedb0b36003bd7befd2258ef58c41c8ac75a5942947981645a8f8a505c3be",
+      "functions": [
+        {
+          "name": "load_sr_model",
+          "params": [
+            "model_name",
+            "scale_factor",
+            "weights_path",
+            "device"
+          ],
+          "returnType": "torch.nn.Module",
+          "exported": true,
+          "lineCount": 60
+        },
+        {
+          "name": "list_available_models",
+          "params": [],
+          "returnType": "list[str]",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "get_weight_status",
+          "params": [],
+          "returnType": "dict[str, bool]",
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "validate_model_weights",
+          "params": [
+            "model",
+            "scale_factor"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 51
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "models",
+          "specifiers": [
+            "get_model"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "get_model_size"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "load_sr_model",
+        "list_available_models",
+        "get_weight_status",
+        "validate_model_weights"
+      ],
+      "totalLines": 175,
+      "hasStructuralAnalysis": true
+    },
+    "app/streamlit_app.py": {
+      "filePath": "app/streamlit_app.py",
+      "contentHash": "c0fd3f1b5272474fd46633f3c9d0949337575546df3e96fd98c00f9f5a90f372",
+      "functions": [
+        {
+          "name": "cached_load_model_v2",
+          "params": [
+            "model_name",
+            "scale_factor"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "render_sidebar",
+          "params": [],
+          "exported": true,
+          "lineCount": 154
+        },
+        {
+          "name": "render_main",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "render_enhance_tab",
+          "params": [
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 107
+        },
+        {
+          "name": "_run_enhancement",
+          "params": [
+            "original_image",
+            "config",
+            "input_filename"
+          ],
+          "exported": true,
+          "lineCount": 149
+        },
+        {
+          "name": "_display_results",
+          "params": [
+            "original",
+            "sr_image",
+            "metrics",
+            "elapsed",
+            "intermediates",
+            "model_name"
+          ],
+          "exported": true,
+          "lineCount": 97
+        },
+        {
+          "name": "render_dashboard_tab",
+          "params": [],
+          "exported": true,
+          "lineCount": 113
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "streamlit",
+          "specifiers": [
+            "st"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "PIL",
+          "specifiers": [
+            "Image"
+          ]
+        },
+        {
+          "source": "app.model_loader",
+          "specifiers": [
+            "load_sr_model",
+            "list_available_models",
+            "get_weight_status"
+          ]
+        },
+        {
+          "source": "app.utils",
+          "specifiers": [
+            "format_metric",
+            "get_image_info",
+            "numpy_to_pil",
+            "pil_to_bytes",
+            "pil_to_numpy",
+            "pil_to_tensor",
+            "tensor_to_pil"
+          ]
+        },
+        {
+          "source": "src.utils.preprocessing",
+          "specifiers": [
+            "mod_crop"
+          ]
+        },
+        {
+          "source": "models.pretrained_weights",
+          "specifiers": [
+            "PRETRAINED_REGISTRY"
+          ]
+        },
+        {
+          "source": "src.restoration",
+          "specifiers": [
+            "RestorationPipeline"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "tensor_to_numpy"
+          ]
+        },
+        {
+          "source": "src.utils.inference_utils",
+          "specifiers": [
+            "postprocess_output",
+            "prepare_input"
+          ]
+        },
+        {
+          "source": "src.utils.tiled_inference",
+          "specifiers": [
+            "tiled_forward",
+            "supports_tiling"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "src.restoration.post_processor",
+          "specifiers": [
+            "PostProcessor"
+          ]
+        }
+      ],
+      "exports": [
+        "cached_load_model_v2",
+        "render_sidebar",
+        "render_main",
+        "render_enhance_tab",
+        "_run_enhancement",
+        "_display_results",
+        "render_dashboard_tab",
+        "main"
+      ],
+      "totalLines": 873,
+      "hasStructuralAnalysis": true
+    },
+    "app/utils.py": {
+      "filePath": "app/utils.py",
+      "contentHash": "54f74a52ec4df030c8fbbd0228d00145dcafe97937f6ae2ef224193259eebb5c",
+      "functions": [
+        {
+          "name": "pil_to_numpy",
+          "params": [
+            "pil_image"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "numpy_to_pil",
+          "params": [
+            "img"
+          ],
+          "returnType": "Image.Image",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "tensor_to_pil",
+          "params": [
+            "tensor"
+          ],
+          "returnType": "Image.Image",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "pil_to_tensor",
+          "params": [
+            "pil_image",
+            "device"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "pil_to_bytes",
+          "params": [
+            "pil_image",
+            "format"
+          ],
+          "returnType": "bytes",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "format_metric",
+          "params": [
+            "name",
+            "value"
+          ],
+          "returnType": "str",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "get_image_info",
+          "params": [
+            "pil_image"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "io",
+          "specifiers": [
+            "io"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "PIL",
+          "specifiers": [
+            "Image"
+          ]
+        }
+      ],
+      "exports": [
+        "pil_to_numpy",
+        "numpy_to_pil",
+        "tensor_to_pil",
+        "pil_to_tensor",
+        "pil_to_bytes",
+        "format_metric",
+        "get_image_info"
+      ],
+      "totalLines": 75,
+      "hasStructuralAnalysis": true
+    },
+    "configs/inference.yaml": {
+      "filePath": "configs/inference.yaml",
+      "contentHash": "5da4e2e2993b9cd2a31598f004170c054a6cd7f57858738c4a0d77a510069bc5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": false
+    },
+    "configs/train_srcnn.yaml": {
+      "filePath": "configs/train_srcnn.yaml",
+      "contentHash": "f2bd59c4b7a3af6da48d6c343590aeedf5dc623df5989fa3a5caf5a08f7e6f84",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 27,
+      "hasStructuralAnalysis": false
+    },
+    "configs/train_srgan.yaml": {
+      "filePath": "configs/train_srgan.yaml",
+      "contentHash": "995a376bafa086d2ce2df55f304bc8de7b43f8c8247914f2d352477a35cf0320",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 38,
+      "hasStructuralAnalysis": false
+    },
+    "configs/train_srresnet.yaml": {
+      "filePath": "configs/train_srresnet.yaml",
+      "contentHash": "74c9ba29a83d8db501892db9021b666e5a389cdcf46dd838c3ae2bbeb777da0d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "data/__init__.py": {
+      "filePath": "data/__init__.py",
+      "contentHash": "92d08d4f799f122dbd034ec7b6ea6aaab295fc9680bb724dfb734d7b9076f078",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "data.dataset_manager",
+          "specifiers": [
+            "DatasetDownloader",
+            "DATASET_REGISTRY"
+          ]
+        },
+        {
+          "source": "data.dataset_validator",
+          "specifiers": [
+            "DatasetValidator"
+          ]
+        },
+        {
+          "source": "src.utils.preprocessing",
+          "specifiers": [
+            "center_crop",
+            "mod_crop"
+          ]
+        },
+        {
+          "source": "data.dataset_splitter",
+          "specifiers": [
+            "split_dataset"
+          ]
+        },
+        {
+          "source": "data.sr_dataset",
+          "specifiers": [
+            "InferenceDataset",
+            "SRTestDataset"
+          ]
+        },
+        {
+          "source": "data.sr_train_dataset",
+          "specifiers": [
+            "DIV2KTrainDataset"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "data/dataset_manager.py": {
+      "filePath": "data/dataset_manager.py",
+      "contentHash": "32c3653c951a524b29c1436befc6074009141a6f1eb1813952056824dbd54ad4",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DatasetDownloader",
+          "methods": [
+            "__init__",
+            "list_available",
+            "download",
+            "download_all",
+            "_download_file",
+            "_extract"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 119
+        }
+      ],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "zipfile",
+          "specifiers": [
+            "zipfile"
+          ]
+        },
+        {
+          "source": "tarfile",
+          "specifiers": [
+            "tarfile"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "requests",
+          "specifiers": [
+            "requests"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "DatasetDownloader"
+      ],
+      "totalLines": 189,
+      "hasStructuralAnalysis": true
+    },
+    "data/dataset_splitter.py": {
+      "filePath": "data/dataset_splitter.py",
+      "contentHash": "8a028924c0adc09f91c84b7cc05897585a1d793e59dd222325bcde91ed29c042",
+      "functions": [
+        {
+          "name": "split_dataset",
+          "params": [
+            "source_dir",
+            "output_dir",
+            "train_ratio",
+            "val_ratio",
+            "test_ratio",
+            "seed",
+            "copy",
+            "extensions"
+          ],
+          "returnType": "dict[str, int]",
+          "exported": true,
+          "lineCount": 69
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "shutil",
+          "specifiers": [
+            "shutil"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "split_dataset"
+      ],
+      "totalLines": 85,
+      "hasStructuralAnalysis": true
+    },
+    "data/dataset_validator.py": {
+      "filePath": "data/dataset_validator.py",
+      "contentHash": "202f03f1c54bc10bf4a99d59f6b527c7d7d7cbb78e966c97bfc55306364109d8",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DatasetValidator",
+          "methods": [
+            "__init__",
+            "validate",
+            "print_report",
+            "_find_images",
+            "_validate_image"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 124
+        }
+      ],
+      "imports": [
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "DatasetValidator"
+      ],
+      "totalLines": 146,
+      "hasStructuralAnalysis": true
+    },
+    "data/sr_dataset.py": {
+      "filePath": "data/sr_dataset.py",
+      "contentHash": "830f6e80882a223a49106a6c5adadd246fe8ca684397651311240b9a399710a5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "InferenceDataset",
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__",
+            "_rgb_to_y"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 49
+        },
+        {
+          "name": "SRTestDataset",
+          "methods": [
+            "__init__",
+            "__len__",
+            "__getitem__"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "imports": [
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Tuple"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset"
+          ]
+        },
+        {
+          "source": "src.utils.preprocessing",
+          "specifiers": [
+            "mod_crop"
+          ]
+        }
+      ],
+      "exports": [
+        "InferenceDataset",
+        "SRTestDataset"
+      ],
+      "totalLines": 114,
+      "hasStructuralAnalysis": true
+    },
+    "data/sr_train_dataset.py": {
+      "filePath": "data/sr_train_dataset.py",
+      "contentHash": "e740668e4eec6ac4e7731e5d0ea533d600fbaeacb8c019b8b5fbeaa28690de46",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DIV2KTrainDataset",
+          "methods": [
+            "__init__",
+            "_load_img",
+            "__len__",
+            "__getitem__",
+            "_augment"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 98
+        }
+      ],
+      "imports": [
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Tuple"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "Dataset"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "DIV2KTrainDataset"
+      ],
+      "totalLines": 118,
+      "hasStructuralAnalysis": true
+    },
+    "docs/PHASE_1_REPORT.docx": {
+      "filePath": "docs/PHASE_1_REPORT.docx",
+      "contentHash": "d9709d8fe2bc47a9e9e1b5633072d940733f1ca5dcc9e7e2c040ef3fc24c021a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 190,
+      "hasStructuralAnalysis": false
+    },
+    "docs/PHASE_1_REPORT.md": {
+      "filePath": "docs/PHASE_1_REPORT.md",
+      "contentHash": "fe077febbb32c01fb12abe75185f7db63d2d411d6d8a8550f0a7ae0ac2b07071",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 171,
+      "hasStructuralAnalysis": false
+    },
+    "docs/PHASE_1_REPORT.md.bak": {
+      "filePath": "docs/PHASE_1_REPORT.md.bak",
+      "contentHash": "242eafa680c53a1a82fdecfa2a86a4e09f9de6a1adbed614ee46a5869a50ef6c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 259,
+      "hasStructuralAnalysis": false
+    },
+    "docs/tasks/progress.txt": {
+      "filePath": "docs/tasks/progress.txt",
+      "contentHash": "82337d248f3eaef2e8a4711e8e73db277dc59229e67f959c9e56bfdc69925e5d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 35,
+      "hasStructuralAnalysis": false
+    },
+    "models/__init__.py": {
+      "filePath": "models/__init__.py",
+      "contentHash": "bb16cbbf424c96e4b7d345ca5e0ec65d29711c83e338fe6daea0ff574a736079",
+      "functions": [
+        {
+          "name": "get_model",
+          "params": [
+            "name"
+          ],
+          "returnType": "nn.Module",
+          "exported": true,
+          "lineCount": 22
+        },
+        {
+          "name": "list_models",
+          "params": [],
+          "returnType": "list[str]",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "get_pretrained",
+          "params": [
+            "name",
+            "scale_factor",
+            "device",
+            "cache_dir"
+          ],
+          "returnType": "nn.Module",
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Any"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "models.bicubic",
+          "specifiers": [
+            "BicubicUpsampler"
+          ]
+        },
+        {
+          "source": "models.srcnn",
+          "specifiers": [
+            "SRCNN"
+          ]
+        },
+        {
+          "source": "models.srresnet",
+          "specifiers": [
+            "SRResNet"
+          ]
+        },
+        {
+          "source": "models.srgan",
+          "specifiers": [
+            "SRGANGenerator"
+          ]
+        },
+        {
+          "source": "models.esrgan",
+          "specifiers": [
+            "ESRGANGenerator",
+            "RRDB"
+          ]
+        }
+      ],
+      "exports": [
+        "get_model",
+        "list_models",
+        "get_pretrained"
+      ],
+      "totalLines": 78,
+      "hasStructuralAnalysis": true
+    },
+    "models/bicubic.py": {
+      "filePath": "models/bicubic.py",
+      "contentHash": "05fa6d55f9bc5c3209fed242ad2699732c3f9b586144fab349e0f0dc47f0851c",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BicubicUpsampler",
+          "methods": [
+            "__init__",
+            "forward",
+            "upscale_numpy",
+            "extra_repr"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 45
+        }
+      ],
+      "imports": [
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        }
+      ],
+      "exports": [
+        "BicubicUpsampler"
+      ],
+      "totalLines": 59,
+      "hasStructuralAnalysis": true
+    },
+    "models/esrgan.py": {
+      "filePath": "models/esrgan.py",
+      "contentHash": "e9f8c69e0fe894d8a8f8746ac429ec27414680252ea55ad4f05576a381f7357e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "DenseBlock",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "RRDB",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "ESRGANGenerator",
+          "methods": [
+            "__init__",
+            "_init_weights",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 106
+        },
+        {
+          "name": "VGGStyleDiscriminator",
+          "methods": [
+            "__init__",
+            "_init_weights",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 62
+        },
+        {
+          "name": "ESRGAN",
+          "methods": [
+            "__init__",
+            "forward",
+            "interpolate_models"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 69
+        }
+      ],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        }
+      ],
+      "exports": [
+        "DenseBlock",
+        "RRDB",
+        "ESRGANGenerator",
+        "VGGStyleDiscriminator",
+        "ESRGAN"
+      ],
+      "totalLines": 333,
+      "hasStructuralAnalysis": true
+    },
+    "models/pretrained/RRDB_ESRGAN_x4.pth": {
+      "filePath": "models/pretrained/RRDB_ESRGAN_x4.pth",
+      "contentHash": "b4a59d2292bfb5b7388dfa54f303903f1cbc35d43218f734e9753e1e74326353",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 217833,
+      "hasStructuralAnalysis": false
+    },
+    "models/pretrained/RealESRGAN_x2plus.pth": {
+      "filePath": "models/pretrained/RealESRGAN_x2plus.pth",
+      "contentHash": "a2cd293526594b03a62b25e761dfaea8f95417ef2fddd294b5f1d5a035770e60",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 219430,
+      "hasStructuralAnalysis": false
+    },
+    "models/pretrained/RealESRGAN_x4plus.pth": {
+      "filePath": "models/pretrained/RealESRGAN_x4plus.pth",
+      "contentHash": "5f6455dc3bc89caecb874f6c65e60e9eff057a158aac4f31db80de69a2bc2fd5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 219852,
+      "hasStructuralAnalysis": false
+    },
+    "models/pretrained_weights.py": {
+      "filePath": "models/pretrained_weights.py",
+      "contentHash": "0f71b05048ae53ac49dd9a0dd0a91fee8982218698424adec085b02ea83d8ff6",
+      "functions": [
+        {
+          "name": "download_file",
+          "params": [
+            "url",
+            "dest_path"
+          ],
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "download_pretrained",
+          "params": [
+            "model_name",
+            "scale_factor",
+            "cache_dir"
+          ],
+          "returnType": "Optional[Path]",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "remap_esrgan_keys",
+          "params": [
+            "state_dict"
+          ],
+          "exported": true,
+          "lineCount": 37
+        },
+        {
+          "name": "load_pretrained",
+          "params": [
+            "model_name",
+            "scale_factor",
+            "device",
+            "cache_dir"
+          ],
+          "returnType": "nn.Module",
+          "exported": true,
+          "lineCount": 76
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "urllib.request",
+          "specifiers": [
+            "urllib.request"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "models",
+          "specifiers": [
+            "get_model"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "download_file",
+        "download_pretrained",
+        "remap_esrgan_keys",
+        "load_pretrained"
+      ],
+      "totalLines": 219,
+      "hasStructuralAnalysis": true
+    },
+    "models/srcnn.py": {
+      "filePath": "models/srcnn.py",
+      "contentHash": "5d546c45e881895f944a567e65c0f9d5a1dcc590f58de2867494707a5c7aee20",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SRCNN",
+          "methods": [
+            "__init__",
+            "_init_weights",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 79
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        }
+      ],
+      "exports": [
+        "SRCNN"
+      ],
+      "totalLines": 98,
+      "hasStructuralAnalysis": true
+    },
+    "models/srgan.py": {
+      "filePath": "models/srgan.py",
+      "contentHash": "cbd55b011bd93c7fd5e9d78225e1d073ac3333273f7d292f1a5577c1c46b6335",
+      "functions": [
+        {
+          "name": "_conv_block",
+          "params": [
+            "in_ch",
+            "out_ch",
+            "stride",
+            "batch_norm"
+          ],
+          "exported": true,
+          "lineCount": 7
+        }
+      ],
+      "classes": [
+        {
+          "name": "Discriminator",
+          "methods": [
+            "__init__",
+            "_init_weights",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 61
+        },
+        {
+          "name": "SRGANGenerator",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "models.srresnet",
+          "specifiers": [
+            "SRResNet"
+          ]
+        }
+      ],
+      "exports": [
+        "_conv_block",
+        "Discriminator",
+        "SRGANGenerator"
+      ],
+      "totalLines": 107,
+      "hasStructuralAnalysis": true
+    },
+    "models/srresnet.py": {
+      "filePath": "models/srresnet.py",
+      "contentHash": "703f5486f0f50baaac2a9df707fca32c45a9ab9b377fbfebae9a87c05ea93d2a",
+      "functions": [
+        {
+          "name": "fold_srresnet_bn",
+          "params": [
+            "state_dict",
+            "num_blocks",
+            "eps"
+          ],
+          "returnType": "Dict[str, torch.Tensor]",
+          "exported": true,
+          "lineCount": 77
+        }
+      ],
+      "classes": [
+        {
+          "name": "ResidualBlock",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 30
+        },
+        {
+          "name": "UpsampleBlock",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        },
+        {
+          "name": "SRResNet",
+          "methods": [
+            "__init__",
+            "_init_weights",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 90
+        }
+      ],
+      "imports": [
+        {
+          "source": "math",
+          "specifiers": [
+            "math"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Dict"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        }
+      ],
+      "exports": [
+        "ResidualBlock",
+        "UpsampleBlock",
+        "fold_srresnet_bn",
+        "SRResNet"
+      ],
+      "totalLines": 248,
+      "hasStructuralAnalysis": true
+    },
+    "requirements.txt": {
+      "filePath": "requirements.txt",
+      "contentHash": "84b3bcf6b9ac8a7532144339a89c4413c0beaa22f1600e4dafefad28a1b44126",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 26,
+      "hasStructuralAnalysis": false
+    },
+    "run_app.py": {
+      "filePath": "run_app.py",
+      "contentHash": "b5dc1a17a67ae6c51aec62ea2a051b3288286d41f4c74a4de382220588dbbf73",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 22
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 30,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/benchmark.py": {
+      "filePath": "scripts/benchmark.py",
+      "contentHash": "84ed17abcf36522d38b403fde62a9951e84aa37903be1ac013347385049d599a",
+      "functions": [
+        {
+          "name": "evaluate_models",
+          "params": [
+            "image_dir",
+            "models_to_test",
+            "scale_factor",
+            "num_images",
+            "device",
+            "output_dir"
+          ],
+          "exported": true,
+          "lineCount": 157
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "json",
+          "specifiers": [
+            "json"
+          ]
+        },
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "app.model_loader",
+          "specifiers": [
+            "load_sr_model"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "get_model_size"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        },
+        {
+          "source": "src.utils.preprocessing",
+          "specifiers": [
+            "mod_crop"
+          ]
+        }
+      ],
+      "exports": [
+        "evaluate_models",
+        "main"
+      ],
+      "totalLines": 214,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/train.py": {
+      "filePath": "scripts/train.py",
+      "contentHash": "b5e0d4a9254870b3c5f5e2aca55a853213fa4585977430e4d4f02ab8ad757a75",
+      "functions": [
+        {
+          "name": "load_config",
+          "params": [
+            "config_path"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "build_optimizer",
+          "params": [
+            "opt_config",
+            "params",
+            "lr",
+            "betas"
+          ],
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "build_scheduler",
+          "params": [
+            "sched_config",
+            "optimizer",
+            "config"
+          ],
+          "exported": true,
+          "lineCount": 14
+        },
+        {
+          "name": "run_training",
+          "params": [
+            "config_path",
+            "resume_path"
+          ],
+          "exported": true,
+          "lineCount": 176
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 8
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "argparse",
+          "specifiers": [
+            "argparse"
+          ]
+        },
+        {
+          "source": "yaml",
+          "specifiers": [
+            "yaml"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.optim",
+          "specifiers": [
+            "optim"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "data.dataset_manager",
+          "specifiers": [
+            "DatasetDownloader"
+          ]
+        },
+        {
+          "source": "data",
+          "specifiers": [
+            "DIV2KTrainDataset",
+            "SRTestDataset"
+          ]
+        },
+        {
+          "source": "models",
+          "specifiers": [
+            "get_model",
+            "get_pretrained"
+          ]
+        },
+        {
+          "source": "models.srgan",
+          "specifiers": [
+            "Discriminator"
+          ]
+        },
+        {
+          "source": "src.training",
+          "specifiers": [
+            "Trainer",
+            "GANTrainer"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device"
+          ]
+        }
+      ],
+      "exports": [
+        "load_config",
+        "build_optimizer",
+        "build_scheduler",
+        "run_training",
+        "main"
+      ],
+      "totalLines": 249,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/train_all.py": {
+      "filePath": "scripts/train_all.py",
+      "contentHash": "dc5028b61fdb435b0ec82ad454ad4b37fec7a87a0fa9ad697221f94128737c75",
+      "functions": [
+        {
+          "name": "run_training",
+          "params": [
+            "config_path",
+            "model_name"
+          ],
+          "exported": true,
+          "lineCount": 34
+        },
+        {
+          "name": "main",
+          "params": [],
+          "exported": true,
+          "lineCount": 18
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "subprocess",
+          "specifiers": [
+            "subprocess"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        }
+      ],
+      "exports": [
+        "run_training",
+        "main"
+      ],
+      "totalLines": 63,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/verify.py": {
+      "filePath": "scripts/verify.py",
+      "contentHash": "f1276b6edb1655d5e282c33b6b8082e7738ef376a04c6e58edf0ab2036e6a95c",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "models",
+          "specifiers": [
+            "get_model",
+            "list_models"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "get_model_size"
+          ]
+        },
+        {
+          "source": "models.srgan",
+          "specifiers": [
+            "SRGANGenerator"
+          ]
+        },
+        {
+          "source": "models.esrgan",
+          "specifiers": [
+            "ESRGANGenerator"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "src.restoration",
+          "specifiers": [
+            "RestorationPipeline",
+            "Denoiser",
+            "Deblurrer",
+            "ContrastEnhancer"
+          ]
+        },
+        {
+          "source": "yaml",
+          "specifiers": [
+            "yaml"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 113,
+      "hasStructuralAnalysis": true
+    },
+    "src/__init__.py": {
+      "filePath": "src/__init__.py",
+      "contentHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 1,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/__init__.py": {
+      "filePath": "src/evaluation/__init__.py",
+      "contentHash": "c9494a36af97ad84a00a9b95ec88e2fb99334ad666684e988f6c9aa60ccd939d",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator",
+            "calculate_psnr",
+            "calculate_ssim"
+          ]
+        },
+        {
+          "source": "src.evaluation.evaluator",
+          "specifiers": [
+            "ModelEvaluator"
+          ]
+        },
+        {
+          "source": "src.evaluation.benchmark",
+          "specifiers": [
+            "BenchmarkRunner"
+          ]
+        },
+        {
+          "source": "src.evaluation.visualizer",
+          "specifiers": [
+            "plot_metric_comparison",
+            "create_side_by_side",
+            "create_zoom_comparison",
+            "plot_training_history"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 12,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/benchmark.py": {
+      "filePath": "src/evaluation/benchmark.py",
+      "contentHash": "759193dbc0ff8f1ae52e9e8ff8926e3f81f2a8ed3bf28dbe60ee6dce5e431a7f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BenchmarkRunner",
+          "methods": [
+            "__init__",
+            "run",
+            "save_report",
+            "save_to_db",
+            "print_comparison_table"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 165
+        }
+      ],
+      "imports": [
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "get_model_size",
+            "tensor_to_numpy",
+            "ensure_dir"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "BenchmarkRunner"
+      ],
+      "totalLines": 190,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/evaluator.py": {
+      "filePath": "src/evaluation/evaluator.py",
+      "contentHash": "72f36fa87a19c4a7e04f414565dff02726867b482fd22eab9760a8ee548f6035",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ModelEvaluator",
+          "methods": [
+            "__init__",
+            "evaluate",
+            "save_results",
+            "save_to_db"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 149
+        }
+      ],
+      "imports": [
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "tensor_to_numpy",
+            "save_image",
+            "ensure_dir"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "ModelEvaluator"
+      ],
+      "totalLines": 173,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/metrics.py": {
+      "filePath": "src/evaluation/metrics.py",
+      "contentHash": "d0b4135744e07351679be904a1844809822cb3f081dedc71c8a8c5dfe5e613de",
+      "functions": [
+        {
+          "name": "calculate_psnr",
+          "params": [
+            "sr",
+            "hr",
+            "**kwargs"
+          ],
+          "returnType": "float",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "calculate_ssim",
+          "params": [
+            "sr",
+            "hr",
+            "**kwargs"
+          ],
+          "returnType": "float",
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [
+        {
+          "name": "MetricCalculator",
+          "methods": [
+            "__init__",
+            "calculate_psnr",
+            "calculate_ssim",
+            "calculate_lpips",
+            "calculate_all"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 164
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "skimage.metrics",
+          "specifiers": [
+            "peak_signal_noise_ratio",
+            "structural_similarity"
+          ]
+        }
+      ],
+      "exports": [
+        "MetricCalculator",
+        "calculate_psnr",
+        "calculate_ssim"
+      ],
+      "totalLines": 193,
+      "hasStructuralAnalysis": true
+    },
+    "src/evaluation/visualizer.py": {
+      "filePath": "src/evaluation/visualizer.py",
+      "contentHash": "59991eba58a846f30f044d290c69c6ef69a79d4d12657711717c6f75f62c4d86",
+      "functions": [
+        {
+          "name": "plot_metric_comparison",
+          "params": [
+            "results",
+            "save_path"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 63
+        },
+        {
+          "name": "create_side_by_side",
+          "params": [
+            "images",
+            "save_path",
+            "title"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "create_zoom_comparison",
+          "params": [
+            "images",
+            "crop_box",
+            "save_path"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 45
+        },
+        {
+          "name": "plot_training_history",
+          "params": [
+            "history",
+            "save_path"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 32
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "matplotlib",
+          "specifiers": [
+            "matplotlib"
+          ]
+        },
+        {
+          "source": "matplotlib.pyplot",
+          "specifiers": [
+            "plt"
+          ]
+        },
+        {
+          "source": "matplotlib.gridspec",
+          "specifiers": [
+            "gridspec"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "ensure_dir"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "plot_metric_comparison",
+        "create_side_by_side",
+        "create_zoom_comparison",
+        "plot_training_history"
+      ],
+      "totalLines": 201,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/__init__.py": {
+      "filePath": "src/restoration/__init__.py",
+      "contentHash": "de5cd0bdacaafc1f2001df6829ae2f9533107ffa1df52333b53d49d94e18775b",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "src.restoration.denoiser",
+          "specifiers": [
+            "Denoiser",
+            "add_gaussian_noise",
+            "add_salt_pepper_noise"
+          ]
+        },
+        {
+          "source": "src.restoration.deblurrer",
+          "specifiers": [
+            "Deblurrer"
+          ]
+        },
+        {
+          "source": "src.restoration.enhancer",
+          "specifiers": [
+            "ContrastEnhancer"
+          ]
+        },
+        {
+          "source": "src.restoration.jpeg_deblock",
+          "specifiers": [
+            "JPEGDeBlocker"
+          ]
+        },
+        {
+          "source": "src.restoration.pipeline",
+          "specifiers": [
+            "RestorationPipeline"
+          ]
+        },
+        {
+          "source": "src.restoration.auto_detect",
+          "specifiers": [
+            "ImageQualityAnalyzer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/auto_detect.py": {
+      "filePath": "src/restoration/auto_detect.py",
+      "contentHash": "76ca71a7cc85df8e1e2bdabc562e24373e69a25a5d396be600ec891bfdfa42b1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ImageQualityAnalyzer",
+          "methods": [
+            "analyze",
+            "_estimate_blockiness"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 85
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "ImageQualityAnalyzer"
+      ],
+      "totalLines": 94,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/deblurrer.py": {
+      "filePath": "src/restoration/deblurrer.py",
+      "contentHash": "880a8148fdd6498e9f04d0b7b87dd5bdfae662ea4e0e16e2ae927bf3ad03b496",
+      "functions": [],
+      "classes": [
+        {
+          "name": "Deblurrer",
+          "methods": [
+            "__init__",
+            "deblur",
+            "_unsharp_mask",
+            "_laplacian_sharpen",
+            "_wiener_deconvolution",
+            "_wiener_channel"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 114
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "Deblurrer"
+      ],
+      "totalLines": 125,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/denoiser.py": {
+      "filePath": "src/restoration/denoiser.py",
+      "contentHash": "d86e9411b212b7a4cbffc9e5b8e8691812a59de6833a9be25eacb05b0fc6e45f",
+      "functions": [
+        {
+          "name": "add_gaussian_noise",
+          "params": [
+            "img",
+            "sigma"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "add_salt_pepper_noise",
+          "params": [
+            "img",
+            "prob"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "classes": [
+        {
+          "name": "Denoiser",
+          "methods": [
+            "__init__",
+            "denoise",
+            "_nlm_denoise",
+            "_median_denoise",
+            "_bilateral_denoise",
+            "_gaussian_denoise"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 71
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "Denoiser",
+        "add_gaussian_noise",
+        "add_salt_pepper_noise"
+      ],
+      "totalLines": 106,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/enhancer.py": {
+      "filePath": "src/restoration/enhancer.py",
+      "contentHash": "be3d785e3f5752813ebe34c1a95c7c33585fc47385028379c85009d714d43704",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ContrastEnhancer",
+          "methods": [
+            "__init__",
+            "enhance",
+            "_clahe",
+            "_gamma_correction",
+            "_auto_white_balance",
+            "_histogram_eq"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 94
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "ContrastEnhancer"
+      ],
+      "totalLines": 105,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/jpeg_deblock.py": {
+      "filePath": "src/restoration/jpeg_deblock.py",
+      "contentHash": "ac9bf501b4b877ff8fa0b8aaa8aa3738d56723021166efe2b8e3e873b6f9259e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JPEGDeBlocker",
+          "methods": [
+            "__init__",
+            "deblock"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 59
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "JPEGDeBlocker"
+      ],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/pipeline.py": {
+      "filePath": "src/restoration/pipeline.py",
+      "contentHash": "e8ebeb6ec0bb62e36ba972a4d708a226b7313a82397d3f887e946b12a510a683",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RestorationPipeline",
+          "methods": [
+            "__init__",
+            "process",
+            "_jpeg_deblock",
+            "_denoise",
+            "_deblur",
+            "_enhance",
+            "_super_resolve",
+            "get_pipeline_description"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 134
+        }
+      ],
+      "imports": [
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "src.restoration.denoiser",
+          "specifiers": [
+            "Denoiser"
+          ]
+        },
+        {
+          "source": "src.restoration.deblurrer",
+          "specifiers": [
+            "Deblurrer"
+          ]
+        },
+        {
+          "source": "src.restoration.enhancer",
+          "specifiers": [
+            "ContrastEnhancer"
+          ]
+        },
+        {
+          "source": "src.restoration.jpeg_deblock",
+          "specifiers": [
+            "JPEGDeBlocker"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "numpy_to_tensor",
+            "tensor_to_numpy"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "RestorationPipeline"
+      ],
+      "totalLines": 159,
+      "hasStructuralAnalysis": true
+    },
+    "src/restoration/post_processor.py": {
+      "filePath": "src/restoration/post_processor.py",
+      "contentHash": "ad2fdbc73776d64b410d90e62a826d6e2442ca12dfb20bd4b5041c226ead0ae2",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PostProcessor",
+          "methods": [
+            "__init__",
+            "process",
+            "_mild_unsharp_mask",
+            "_boost_vibrance"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 60
+        }
+      ],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        }
+      ],
+      "exports": [
+        "PostProcessor"
+      ],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/__init__.py": {
+      "filePath": "src/training/__init__.py",
+      "contentHash": "1fd570e3e260a7f1b8eaf6c996423c6ae0d817c38bb353654cc93af3ccb21654",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "src.training.losses",
+          "specifiers": [
+            "PixelLoss",
+            "VGGPerceptualLoss",
+            "AdversarialLoss",
+            "TVLoss"
+          ]
+        },
+        {
+          "source": "src.training.trainer",
+          "specifiers": [
+            "Trainer"
+          ]
+        },
+        {
+          "source": "src.training.gan_trainer",
+          "specifiers": [
+            "GANTrainer"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/gan_trainer.py": {
+      "filePath": "src/training/gan_trainer.py",
+      "contentHash": "098e971ed7cb5d9fce91e4bbf32a9f1dcb6461ffba67e9cb1f5bcb2e2b48efed",
+      "functions": [],
+      "classes": [
+        {
+          "name": "GANTrainer",
+          "methods": [
+            "__init__",
+            "_train_epoch",
+            "_save_checkpoint",
+            "load_checkpoint"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 204
+        }
+      ],
+      "imports": [
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Dict"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.training.trainer",
+          "specifiers": [
+            "Trainer"
+          ]
+        },
+        {
+          "source": "src.training.losses",
+          "specifiers": [
+            "PixelLoss",
+            "VGGPerceptualLoss",
+            "AdversarialLoss"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "GANTrainer"
+      ],
+      "totalLines": 225,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/losses.py": {
+      "filePath": "src/training/losses.py",
+      "contentHash": "90688fad28599fc238ff9f222dfd760df56a5f96930c8556126ee29e2dae44c3",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PixelLoss",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "VGGPerceptualLoss",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "AdversarialLoss",
+          "methods": [
+            "__init__",
+            "forward"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "TVLoss",
+          "methods": [
+            "__init__",
+            "forward",
+            "_tensor_size"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 23
+        }
+      ],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "torchvision.models",
+          "specifiers": [
+            "vgg19",
+            "VGG19_Weights"
+          ]
+        }
+      ],
+      "exports": [
+        "PixelLoss",
+        "VGGPerceptualLoss",
+        "AdversarialLoss",
+        "TVLoss"
+      ],
+      "totalLines": 111,
+      "hasStructuralAnalysis": true
+    },
+    "src/training/trainer.py": {
+      "filePath": "src/training/trainer.py",
+      "contentHash": "81d8698874b287faac9cc0819c0e7c6dc31dd53ccc4d9a773e0765a65e6982f8",
+      "functions": [],
+      "classes": [
+        {
+          "name": "Trainer",
+          "methods": [
+            "__init__",
+            "train",
+            "_train_epoch",
+            "_validate",
+            "_save_checkpoint",
+            "load_checkpoint",
+            "save_best_weights"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 204
+        }
+      ],
+      "imports": [
+        {
+          "source": "time",
+          "specifiers": [
+            "time"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "torch.utils.data",
+          "specifiers": [
+            "DataLoader"
+          ]
+        },
+        {
+          "source": "tqdm",
+          "specifiers": [
+            "tqdm"
+          ]
+        },
+        {
+          "source": "src.evaluation.metrics",
+          "specifiers": [
+            "MetricCalculator"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "Trainer"
+      ],
+      "totalLines": 226,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/__init__.py": {
+      "filePath": "src/utils/__init__.py",
+      "contentHash": "4f2c293aa229212af4b5592f4c43542bfccffcaf4c5d773b5b6caaf07dc7427c",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "get_device",
+            "load_image",
+            "save_image",
+            "tensor_to_numpy",
+            "numpy_to_tensor"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/common.py": {
+      "filePath": "src/utils/common.py",
+      "contentHash": "d2676338866c564b45a7a7be3ff236ac6949174d71fb26da79fd12e16801c13e",
+      "functions": [
+        {
+          "name": "get_device",
+          "params": [],
+          "returnType": "torch.device",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "load_image",
+          "params": [
+            "path",
+            "color_mode"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 18
+        },
+        {
+          "name": "save_image",
+          "params": [
+            "img",
+            "path",
+            "quality"
+          ],
+          "returnType": "None",
+          "exported": true,
+          "lineCount": 32
+        },
+        {
+          "name": "tensor_to_numpy",
+          "params": [
+            "tensor"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "numpy_to_tensor",
+          "params": [
+            "img",
+            "device"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 16
+        },
+        {
+          "name": "get_model_size",
+          "params": [
+            "model"
+          ],
+          "returnType": "dict",
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "ensure_dir",
+          "params": [
+            "path"
+          ],
+          "returnType": "Path",
+          "exported": true,
+          "lineCount": 5
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "os",
+          "specifiers": [
+            "os"
+          ]
+        },
+        {
+          "source": "random",
+          "specifiers": [
+            "random"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional",
+            "Union"
+          ]
+        },
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "PIL",
+          "specifiers": [
+            "Image"
+          ]
+        }
+      ],
+      "exports": [
+        "get_device",
+        "load_image",
+        "save_image",
+        "tensor_to_numpy",
+        "numpy_to_tensor",
+        "get_model_size",
+        "ensure_dir"
+      ],
+      "totalLines": 146,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/inference_db.py": {
+      "filePath": "src/utils/inference_db.py",
+      "contentHash": "e46112ba2c2d6cb44df2d0d395c6f762e246b25f8183f3972cf494ebfdb5d57d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "InferenceTracker",
+          "methods": [
+            "__init__",
+            "_init_db",
+            "log_inference",
+            "get_history",
+            "get_benchmark_stats"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 83
+        }
+      ],
+      "imports": [
+        {
+          "source": "sqlite3",
+          "specifiers": [
+            "sqlite3"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        },
+        {
+          "source": "pandas",
+          "specifiers": [
+            "pd"
+          ]
+        },
+        {
+          "source": "src.utils.common",
+          "specifiers": [
+            "ensure_dir"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "InferenceTracker"
+      ],
+      "totalLines": 100,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/inference_utils.py": {
+      "filePath": "src/utils/inference_utils.py",
+      "contentHash": "999f9bcfb822c2433ecbe296d2e11e424a7a8bb69b608f04d0e96169a5954657",
+      "functions": [
+        {
+          "name": "prepare_input",
+          "params": [
+            "tensor",
+            "model_name",
+            "scale_factor",
+            "registry"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 33
+        },
+        {
+          "name": "postprocess_output",
+          "params": [
+            "tensor",
+            "model_name",
+            "scale_factor",
+            "registry"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "pad_to_mod",
+          "params": [
+            "tensor",
+            "scale_factor"
+          ],
+          "returnType": "tuple[torch.Tensor, int, int]",
+          "exported": true,
+          "lineCount": 20
+        },
+        {
+          "name": "unpad",
+          "params": [
+            "tensor",
+            "pad_h",
+            "pad_w",
+            "scale_factor"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 13
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn.functional",
+          "specifiers": [
+            "F"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "prepare_input",
+        "postprocess_output",
+        "pad_to_mod",
+        "unpad"
+      ],
+      "totalLines": 107,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/logger.py": {
+      "filePath": "src/utils/logger.py",
+      "contentHash": "b9cb03aa9f35033f76b3dd00148d8a73e20fbcec90e6672625f4ae87ec0a7059",
+      "functions": [
+        {
+          "name": "get_logger",
+          "params": [
+            "name",
+            "log_file",
+            "level"
+          ],
+          "returnType": "logging.Logger",
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "logging",
+          "specifiers": [
+            "logging"
+          ]
+        },
+        {
+          "source": "sys",
+          "specifiers": [
+            "sys"
+          ]
+        },
+        {
+          "source": "pathlib",
+          "specifiers": [
+            "Path"
+          ]
+        },
+        {
+          "source": "typing",
+          "specifiers": [
+            "Optional"
+          ]
+        }
+      ],
+      "exports": [
+        "get_logger"
+      ],
+      "totalLines": 64,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/preprocessing.py": {
+      "filePath": "src/utils/preprocessing.py",
+      "contentHash": "6cc912744332a7204e85632e4c433a82bf12ef2d17744fffed0ce1baedecbc3f",
+      "functions": [
+        {
+          "name": "center_crop",
+          "params": [
+            "img",
+            "crop_size"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "mod_crop",
+          "params": [
+            "img",
+            "scale_factor"
+          ],
+          "returnType": "np.ndarray",
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "cv2",
+          "specifiers": [
+            "cv2"
+          ]
+        },
+        {
+          "source": "numpy",
+          "specifiers": [
+            "np"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        }
+      ],
+      "exports": [
+        "center_crop",
+        "mod_crop"
+      ],
+      "totalLines": 42,
+      "hasStructuralAnalysis": true
+    },
+    "src/utils/tiled_inference.py": {
+      "filePath": "src/utils/tiled_inference.py",
+      "contentHash": "3082570cf4e6a4b15d834080cfd3585008772c578dfd755a1b66d97db715c34e",
+      "functions": [
+        {
+          "name": "supports_tiling",
+          "params": [
+            "model"
+          ],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 12
+        },
+        {
+          "name": "tiled_forward",
+          "params": [
+            "model",
+            "lr_tensor",
+            "tile_size",
+            "overlap",
+            "scale_factor"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 95
+        },
+        {
+          "name": "_generate_blend_mask",
+          "params": [
+            "tile_size",
+            "overlap",
+            "channels"
+          ],
+          "returnType": "torch.Tensor",
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "torch",
+          "specifiers": [
+            "torch"
+          ]
+        },
+        {
+          "source": "torch.nn",
+          "specifiers": [
+            "nn"
+          ]
+        },
+        {
+          "source": "src.utils.logger",
+          "specifiers": [
+            "get_logger"
+          ]
+        },
+        {
+          "source": "src.utils.inference_utils",
+          "specifiers": [
+            "pad_to_mod",
+            "unpad"
+          ]
+        }
+      ],
+      "exports": [
+        "supports_tiling",
+        "tiled_forward",
+        "_generate_blend_mask"
+      ],
+      "totalLines": 142,
+      "hasStructuralAnalysis": true
+    }
+  }
+}

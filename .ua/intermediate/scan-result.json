@@ -1,0 +1,560 @@
+{
+  "name": "image-super-resolution",
+  "description": "AI image super-resolution and restoration platform supporting Bicubic, SRCNN, SRResNet, SRGAN, and Real-ESRGAN with modular training, pre-restoration pipelines, and Streamlit dashboard.",
+  "languages": [
+    "markdown",
+    "python",
+    "yaml"
+  ],
+  "frameworks": [
+    "PyTorch",
+    "Streamlit",
+    "OpenCV",
+    "NumPy"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 215,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "TECHNICAL_DEEP_DIVE.md",
+      "language": "markdown",
+      "sizeLines": 618,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "app/model_loader.py",
+      "language": "python",
+      "sizeLines": 174,
+      "fileCategory": "code"
+    },
+    {
+      "path": "app/streamlit_app.py",
+      "language": "python",
+      "sizeLines": 872,
+      "fileCategory": "code"
+    },
+    {
+      "path": "app/utils.py",
+      "language": "python",
+      "sizeLines": 74,
+      "fileCategory": "code"
+    },
+    {
+      "path": "configs/inference.yaml",
+      "language": "yaml",
+      "sizeLines": 23,
+      "fileCategory": "config"
+    },
+    {
+      "path": "configs/train_srcnn.yaml",
+      "language": "yaml",
+      "sizeLines": 26,
+      "fileCategory": "config"
+    },
+    {
+      "path": "configs/train_srgan.yaml",
+      "language": "yaml",
+      "sizeLines": 37,
+      "fileCategory": "config"
+    },
+    {
+      "path": "configs/train_srresnet.yaml",
+      "language": "yaml",
+      "sizeLines": 29,
+      "fileCategory": "config"
+    },
+    {
+      "path": "data/__init__.py",
+      "language": "python",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/dataset_manager.py",
+      "language": "python",
+      "sizeLines": 188,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/dataset_splitter.py",
+      "language": "python",
+      "sizeLines": 84,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/dataset_validator.py",
+      "language": "python",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/sr_dataset.py",
+      "language": "python",
+      "sizeLines": 113,
+      "fileCategory": "code"
+    },
+    {
+      "path": "data/sr_train_dataset.py",
+      "language": "python",
+      "sizeLines": 117,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/PHASE_1_REPORT.docx",
+      "language": "docx",
+      "sizeLines": 189,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/PHASE_1_REPORT.md",
+      "language": "markdown",
+      "sizeLines": 170,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "docs/PHASE_1_REPORT.md.bak",
+      "language": "bak",
+      "sizeLines": 258,
+      "fileCategory": "code"
+    },
+    {
+      "path": "docs/tasks/progress.txt",
+      "language": "txt",
+      "sizeLines": 34,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "models/__init__.py",
+      "language": "python",
+      "sizeLines": 77,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/bicubic.py",
+      "language": "python",
+      "sizeLines": 58,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/esrgan.py",
+      "language": "python",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/pretrained/RRDB_ESRGAN_x4.pth",
+      "language": "pth",
+      "sizeLines": 217832,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/pretrained/RealESRGAN_x2plus.pth",
+      "language": "pth",
+      "sizeLines": 219429,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/pretrained/RealESRGAN_x4plus.pth",
+      "language": "pth",
+      "sizeLines": 219851,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/pretrained_weights.py",
+      "language": "python",
+      "sizeLines": 218,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/srcnn.py",
+      "language": "python",
+      "sizeLines": 97,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/srgan.py",
+      "language": "python",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "models/srresnet.py",
+      "language": "python",
+      "sizeLines": 247,
+      "fileCategory": "code"
+    },
+    {
+      "path": "requirements.txt",
+      "language": "txt",
+      "sizeLines": 25,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "run_app.py",
+      "language": "python",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/benchmark.py",
+      "language": "python",
+      "sizeLines": 213,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/train.py",
+      "language": "python",
+      "sizeLines": 248,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/train_all.py",
+      "language": "python",
+      "sizeLines": 62,
+      "fileCategory": "code"
+    },
+    {
+      "path": "scripts/verify.py",
+      "language": "python",
+      "sizeLines": 112,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/__init__.py",
+      "language": "python",
+      "sizeLines": 0,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/__init__.py",
+      "language": "python",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/benchmark.py",
+      "language": "python",
+      "sizeLines": 189,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/evaluator.py",
+      "language": "python",
+      "sizeLines": 172,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/metrics.py",
+      "language": "python",
+      "sizeLines": 192,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/evaluation/visualizer.py",
+      "language": "python",
+      "sizeLines": 200,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/__init__.py",
+      "language": "python",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/auto_detect.py",
+      "language": "python",
+      "sizeLines": 93,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/deblurrer.py",
+      "language": "python",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/denoiser.py",
+      "language": "python",
+      "sizeLines": 105,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/enhancer.py",
+      "language": "python",
+      "sizeLines": 104,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/jpeg_deblock.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/pipeline.py",
+      "language": "python",
+      "sizeLines": 158,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/restoration/post_processor.py",
+      "language": "python",
+      "sizeLines": 72,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/__init__.py",
+      "language": "python",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/gan_trainer.py",
+      "language": "python",
+      "sizeLines": 224,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/losses.py",
+      "language": "python",
+      "sizeLines": 110,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/training/trainer.py",
+      "language": "python",
+      "sizeLines": 225,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/__init__.py",
+      "language": "python",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/common.py",
+      "language": "python",
+      "sizeLines": 145,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/inference_db.py",
+      "language": "python",
+      "sizeLines": 99,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/inference_utils.py",
+      "language": "python",
+      "sizeLines": 106,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/logger.py",
+      "language": "python",
+      "sizeLines": 63,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/preprocessing.py",
+      "language": "python",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "src/utils/tiled_inference.py",
+      "language": "python",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 60,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "moderate",
+  "importMap": {
+    "README.md": [],
+    "TECHNICAL_DEEP_DIVE.md": [],
+    "app/model_loader.py": [
+      "models/__init__.py",
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "app/streamlit_app.py": [
+      "app/model_loader.py",
+      "app/utils.py",
+      "models/pretrained_weights.py",
+      "src/evaluation/metrics.py",
+      "src/restoration/__init__.py",
+      "src/restoration/post_processor.py",
+      "src/utils/common.py",
+      "src/utils/inference_utils.py",
+      "src/utils/preprocessing.py",
+      "src/utils/tiled_inference.py"
+    ],
+    "app/utils.py": [],
+    "configs/inference.yaml": [],
+    "configs/train_srcnn.yaml": [],
+    "configs/train_srgan.yaml": [],
+    "configs/train_srresnet.yaml": [],
+    "data/__init__.py": [
+      "data/dataset_manager.py",
+      "data/dataset_splitter.py",
+      "data/dataset_validator.py",
+      "data/sr_dataset.py",
+      "data/sr_train_dataset.py",
+      "src/utils/preprocessing.py"
+    ],
+    "data/dataset_manager.py": [
+      "src/utils/logger.py"
+    ],
+    "data/dataset_splitter.py": [
+      "src/utils/logger.py"
+    ],
+    "data/dataset_validator.py": [
+      "src/utils/logger.py"
+    ],
+    "data/sr_dataset.py": [
+      "src/utils/preprocessing.py"
+    ],
+    "data/sr_train_dataset.py": [
+      "src/utils/logger.py"
+    ],
+    "docs/PHASE_1_REPORT.docx": [],
+    "docs/PHASE_1_REPORT.md": [],
+    "docs/PHASE_1_REPORT.md.bak": [],
+    "docs/tasks/progress.txt": [],
+    "models/__init__.py": [
+      "models/bicubic.py",
+      "models/esrgan.py",
+      "models/srcnn.py",
+      "models/srgan.py",
+      "models/srresnet.py"
+    ],
+    "models/bicubic.py": [],
+    "models/esrgan.py": [],
+    "models/pretrained/RRDB_ESRGAN_x4.pth": [],
+    "models/pretrained/RealESRGAN_x2plus.pth": [],
+    "models/pretrained/RealESRGAN_x4plus.pth": [],
+    "models/pretrained_weights.py": [
+      "models/__init__.py",
+      "src/utils/logger.py"
+    ],
+    "models/srcnn.py": [],
+    "models/srgan.py": [
+      "models/srresnet.py"
+    ],
+    "models/srresnet.py": [],
+    "requirements.txt": [],
+    "run_app.py": [],
+    "scripts/benchmark.py": [
+      "app/model_loader.py",
+      "src/evaluation/metrics.py",
+      "src/utils/common.py",
+      "src/utils/logger.py",
+      "src/utils/preprocessing.py"
+    ],
+    "scripts/train.py": [
+      "data/__init__.py",
+      "data/dataset_manager.py",
+      "models/__init__.py",
+      "models/srgan.py",
+      "src/training/__init__.py",
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "scripts/train_all.py": [],
+    "scripts/verify.py": [
+      "models/__init__.py",
+      "models/esrgan.py",
+      "models/srgan.py",
+      "src/evaluation/metrics.py",
+      "src/restoration/__init__.py",
+      "src/utils/common.py"
+    ],
+    "src/__init__.py": [],
+    "src/evaluation/__init__.py": [
+      "src/evaluation/benchmark.py",
+      "src/evaluation/evaluator.py",
+      "src/evaluation/metrics.py",
+      "src/evaluation/visualizer.py"
+    ],
+    "src/evaluation/benchmark.py": [
+      "src/evaluation/metrics.py",
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/evaluation/evaluator.py": [
+      "src/evaluation/metrics.py",
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/evaluation/metrics.py": [],
+    "src/evaluation/visualizer.py": [
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/restoration/__init__.py": [
+      "src/restoration/auto_detect.py",
+      "src/restoration/deblurrer.py",
+      "src/restoration/denoiser.py",
+      "src/restoration/enhancer.py",
+      "src/restoration/jpeg_deblock.py",
+      "src/restoration/pipeline.py"
+    ],
+    "src/restoration/auto_detect.py": [],
+    "src/restoration/deblurrer.py": [],
+    "src/restoration/denoiser.py": [],
+    "src/restoration/enhancer.py": [],
+    "src/restoration/jpeg_deblock.py": [],
+    "src/restoration/pipeline.py": [
+      "src/restoration/deblurrer.py",
+      "src/restoration/denoiser.py",
+      "src/restoration/enhancer.py",
+      "src/restoration/jpeg_deblock.py",
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/restoration/post_processor.py": [],
+    "src/training/__init__.py": [
+      "src/training/gan_trainer.py",
+      "src/training/losses.py",
+      "src/training/trainer.py"
+    ],
+    "src/training/gan_trainer.py": [
+      "src/training/losses.py",
+      "src/training/trainer.py",
+      "src/utils/logger.py"
+    ],
+    "src/training/losses.py": [],
+    "src/training/trainer.py": [
+      "src/evaluation/metrics.py",
+      "src/utils/logger.py"
+    ],
+    "src/utils/__init__.py": [
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/utils/common.py": [],
+    "src/utils/inference_db.py": [
+      "src/utils/common.py",
+      "src/utils/logger.py"
+    ],
+    "src/utils/inference_utils.py": [
+      "src/utils/logger.py"
+    ],
+    "src/utils/logger.py": [],
+    "src/utils/preprocessing.py": [
+      "src/utils/logger.py"
+    ],
+    "src/utils/tiled_inference.py": [
+      "src/utils/inference_utils.py",
+      "src/utils/logger.py"
+    ]
+  }
+}

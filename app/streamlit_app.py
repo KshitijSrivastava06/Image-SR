@@ -481,6 +481,8 @@ def render_enhance_tab(config: dict):
             st.session_state["sr_result"],
             st.session_state.get("metrics", {}),
             st.session_state.get("elapsed", 0),
+            intermediates=st.session_state.get("intermediates"),
+            model_name=config.get("model_name", ""),
         )
 
 
@@ -626,7 +628,14 @@ def _run_enhancement(original_image: Image.Image, config: dict, input_filename: 
     st.session_state["elapsed"] = elapsed
     st.session_state["intermediates"] = intermediates if 'intermediates' in locals() else {}
 
-    _display_results(original_image, sr_image, metrics, elapsed, st.session_state["intermediates"])
+    _display_results(
+        original_image,
+        sr_image,
+        metrics,
+        elapsed,
+        st.session_state["intermediates"],
+        model_name=config.get("model_name", ""),
+    )
 
 
 def _display_results(
@@ -635,6 +644,7 @@ def _display_results(
     metrics: dict,
     elapsed: float,
     intermediates: dict = None,
+    model_name: str = "",
 ):
     """Display enhancement results with before/after comparison and optional pipeline steps."""
     st.markdown("---")
@@ -679,6 +689,10 @@ def _display_results(
         )
 
     st.caption("ℹ️ *PSNR and SSIM are calculated against a Bicubic upscale of the input image (no ground-truth HR image is available). Perceptually sharper models like SRGAN/ESRGAN add realistic high-frequency textures that naturally diverge from smooth bicubic baseline.*")
+
+    # Health indicator for near-identity outputs
+    if model_name.lower() in ("srcnn", "srresnet", "srgan") and psnr_val > 42.0:
+        st.info("💡 **Model Quality Advisory:** Output is mathematically very close to bicubic interpolation. Deep models will add more distinct high-frequency textures and sharpness once fully trained.")
 
     st.markdown("")
 
