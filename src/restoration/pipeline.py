@@ -16,10 +16,8 @@ from src.restoration.denoiser import Denoiser
 from src.restoration.deblurrer import Deblurrer
 from src.restoration.enhancer import ContrastEnhancer
 from src.restoration.jpeg_deblock import JPEGDeBlocker
+from src.restoration.frequency import gaussian_frequency_filter
 from src.utils.common import numpy_to_tensor, tensor_to_numpy
-from src.utils.logger import get_logger
-
-logger = get_logger("restoration_pipeline")
 
 
 class RestorationPipeline:
@@ -52,7 +50,12 @@ class RestorationPipeline:
         enhance_strength: float = 2.0,
         sr_model: Optional[torch.nn.Module] = None,
         device: Optional[torch.device] = None,
+        *,
+        frequency_mode: str | None = None,
+        frequency_cutoff: float = 0.12,
+        frequency_gain: float = 0.7,
     ):
+        # Register only the enabled filters in the order in which they should run.
         self.steps = []
 
         if jpeg_deblock:
@@ -79,6 +82,14 @@ class RestorationPipeline:
         else:
             self.enhancer = None
 
+        if frequency_mode:
+            self.steps.append((
+                "frequency_filter",
+                lambda image: gaussian_frequency_filter(
+                    image, frequency_mode, frequency_cutoff, frequency_gain,
+                ),
+            ))
+
         self.sr_model = sr_model
         self.device = device or torch.device("cpu")
 
@@ -103,10 +114,8 @@ class RestorationPipeline:
         intermediates = {"input": image.copy()} if return_intermediates else {}
         current = image.copy()
 
-        logger.info(f"Running pipeline: {[name for name, _ in self.steps]}")
-
         for step_name, step_fn in self.steps:
-            logger.info(f"  -> {step_name}")
+            # Each filter receives the previous output. Optional copies feed the restoration preview.
             current = step_fn(current)
             if return_intermediates:
                 intermediates[step_name] = current.copy()

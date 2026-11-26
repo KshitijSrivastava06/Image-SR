@@ -44,6 +44,7 @@ class JPEGDeBlocker:
         
         # Determine filter strengths based on estimated quality
         # Lower quality = stronger filtering
+        # A lower estimated source quality triggers stronger artifact smoothing.
         strength = max(3.0, 15.0 - (self.quality / 10.0))
         
         # Apply bilateral filter to Luma (Y) channel

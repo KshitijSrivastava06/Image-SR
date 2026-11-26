@@ -6,6 +6,7 @@ Supports Wiener deconvolution, unsharp masking, and Laplacian sharpening.
 
 import cv2
 import numpy as np
+from scipy import fft
 
 
 class Deblurrer:
@@ -47,6 +48,7 @@ class Deblurrer:
         sharp = original + strength * (original - blurred)
         """
         blurred = cv2.GaussianBlur(img, (0, 0), sigmaX=3)
+        # Unsharp masking adds a scaled high-frequency detail layer back to the original.
         sharpened = cv2.addWeighted(
             img, 1.0 + self.strength,
             blurred, -self.strength,
@@ -76,49 +78,19 @@ class Deblurrer:
 
         Uses a simple blur kernel and frequency-domain filtering.
         """
-        result = img.copy().astype(np.float64)
-
-        # Create motion blur kernel
-        kernel_size = max(5, int(self.strength * 5))
-        kernel = np.zeros((kernel_size, kernel_size))
-        kernel[kernel_size // 2, :] = 1.0 / kernel_size
-
-        # Noise-to-signal ratio (regularization)
-        nsr = 0.01
-
-        if img.ndim == 3:
-            channels = cv2.split(result)
-            deconv = []
-            for ch in channels:
-                deconv.append(self._wiener_channel(ch, kernel, nsr))
-            result = cv2.merge(deconv)
-        else:
-            result = self._wiener_channel(result, kernel, nsr)
-
-        return np.clip(result, 0, 255).astype(np.uint8)
-
-    @staticmethod
-    def _wiener_channel(
-        channel: np.ndarray,
-        kernel: np.ndarray,
-        nsr: float,
-    ) -> np.ndarray:
-        """Apply Wiener deconvolution to a single channel."""
-        h, w = channel.shape
-        kh, kw = kernel.shape
-
-        # Pad kernel to image size
-        padded_kernel = np.zeros((h, w))
-        padded_kernel[:kh, :kw] = kernel
-
-        # FFT
-        F_img = np.fft.fft2(channel)
-        F_kernel = np.fft.fft2(padded_kernel)
-
-        # Wiener filter
-        F_kernel_conj = np.conj(F_kernel)
-        F_kernel_sq = np.abs(F_kernel) ** 2
-        wiener = F_kernel_conj / (F_kernel_sq + nsr)
-
-        result = np.real(np.fft.ifft2(F_img * wiener))
-        return result
+        radius = min(max(2, int(self.strength * 2.5)), img.shape[1] // 2)
+        if radius == 0:
+            return img.copy()
+        # A centered horizontal blur kernel has a real frequency response.
+        padded = np.pad(img.astype(np.float32), [(0, 0), (radius, radius)] + [(0, 0)] * (img.ndim - 2),
+                        mode="reflect")
+        kernel = np.zeros(padded.shape[1], dtype=np.float32)
+        kernel[:radius + 1] = kernel[-radius:] = 1 / (2 * radius + 1)
+        response = fft.rfft(kernel).real
+        # Regularization limits noise amplification when the blur response is close to zero.
+        wiener = response / (response**2 + 0.01)
+        transfer = wiener[None, :, None] if img.ndim == 3 else wiener[None, :]
+        restored = fft.irfft(
+            fft.rfft(padded, axis=1) * transfer, n=padded.shape[1], axis=1,
+        )
+        return np.clip(np.rint(restored[:, radius:-radius]), 0, 255).astype(np.uint8)

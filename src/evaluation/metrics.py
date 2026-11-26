@@ -61,6 +61,11 @@ class MetricCalculator:
             sr = sr[crop_border:-crop_border, crop_border:-crop_border]
             hr = hr[crop_border:-crop_border, crop_border:-crop_border]
 
+        if not sr.size or sr.shape != hr.shape:
+            raise ValueError("PSNR requires nonempty images of the same shape.")
+        # Exact pixel equality gives zero mean squared error and infinite PSNR.
+        if np.array_equal(sr, hr):
+            return float("inf")
         return float(peak_signal_noise_ratio(hr, sr, data_range=data_range))
 
     # ------------------------------------------------------------------
@@ -87,11 +92,18 @@ class MetricCalculator:
             sr = sr[crop_border:-crop_border, crop_border:-crop_border]
             hr = hr[crop_border:-crop_border, crop_border:-crop_border]
 
+        shortest = min(sr.shape[:2])
+        # SSIM uses an odd local window small enough to fit both image dimensions.
+        window = min(7, shortest if shortest % 2 else shortest - 1)
+        if window < 3:
+            raise ValueError("SSIM requires at least 3 pixels along each spatial axis.")
+
         return float(
             structural_similarity(
                 hr, sr,
                 data_range=data_range,
                 channel_axis=2 if sr.ndim == 3 else None,
+                win_size=window,
             )
         )
 

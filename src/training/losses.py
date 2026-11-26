@@ -35,17 +35,15 @@ class VGGPerceptualLoss(nn.Module):
     """
     def __init__(self, feature_layer: int = 35):
         super().__init__()
-        # Load pre-trained VGG19
-        vgg = vgg19(weights=VGG19_Weights.IMAGENET1K_V1)
-        
-        # We only need the features up to the requested layer
-        # Layer 35 is the conv5_4 layer (before relu5_4)
-        self.features = nn.Sequential(*list(vgg.features.children())[:feature_layer]).eval()
-        
-        # Freeze VGG parameters
-        for param in self.features.parameters():
-            param.requires_grad = False
-            
+        # Construct only the retained feature extractor with real tensors.
+        with torch.device("meta"):
+            features = vgg19(weights=None).features[:feature_layer]
+        weights = VGG19_Weights.IMAGENET1K_V1.get_state_dict(progress=False, check_hash=True)
+        features.load_state_dict({
+            key: weights[f"features.{key}"] for key in features.state_dict()
+        }, assign=True)
+        self.features = features.eval().requires_grad_(False)
+
         # VGG expects images normalized with ImageNet mean/std
         self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
@@ -58,7 +56,8 @@ class VGGPerceptualLoss(nn.Module):
         
         # Extract features
         sr_features = self.features(sr_norm)
-        hr_features = self.features(hr_norm).detach()
+        with torch.no_grad():
+            hr_features = self.features(hr_norm)
         
         return self.loss_fn(sr_features, hr_features)
 

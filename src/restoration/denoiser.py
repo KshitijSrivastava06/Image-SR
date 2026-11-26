@@ -66,6 +66,7 @@ class Denoiser:
     def _median_denoise(self, img: np.ndarray) -> np.ndarray:
         """Median filter (best for salt & pepper noise)."""
         ksize = max(3, self.strength | 1)  # ensure odd
+        # The median is robust to isolated extreme values such as salt-and-pepper noise.
         return cv2.medianBlur(img, ksize)
 
     def _bilateral_denoise(self, img: np.ndarray) -> np.ndarray:
@@ -79,6 +80,7 @@ class Denoiser:
     def _gaussian_denoise(self, img: np.ndarray) -> np.ndarray:
         """Gaussian blur (simple smoothing)."""
         ksize = max(3, self.strength | 1)
+        # Gaussian weights smooth small variations but may also soften edges.
         return cv2.GaussianBlur(img, (ksize, ksize), 0)
 
 

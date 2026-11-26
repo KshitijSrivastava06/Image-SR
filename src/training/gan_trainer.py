@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from src.training.trainer import Trainer
 from src.training.losses import PixelLoss, VGGPerceptualLoss, AdversarialLoss
+from src.utils.common import save_checkpoint
 from src.utils.logger import get_logger
 
 logger = get_logger("gan_trainer")
@@ -42,6 +43,7 @@ class GANTrainer(Trainer):
         grad_clip: float = 1.0,
         checkpoint_dir: str = "outputs/checkpoints",
         early_stopping_patience: int = 50,
+        perceptual_feature_layer: int = 35,
     ):
         # We pass generator to base class to reuse validation and state dict saving logic
         super().__init__(
@@ -73,7 +75,7 @@ class GANTrainer(Trainer):
         
         # Initialize Losses
         self.pixel_loss = PixelLoss(criterion='l1').to(device)
-        self.perceptual_loss = VGGPerceptualLoss().to(device)
+        self.perceptual_loss = VGGPerceptualLoss(perceptual_feature_layer).to(device)
         self.adversarial_loss = AdversarialLoss().to(device)
         
         if self.amp:
@@ -99,12 +101,15 @@ class GANTrainer(Trainer):
             # ---------------------
             # 1. Train Discriminator
             # ---------------------
+            # Update the discriminator on real HR patches and generated patches with generator gradients disabled.
+            self.discriminator.requires_grad_(True)
             self.opt_d.zero_grad(set_to_none=True)
             
             if self.amp:
                 with torch.amp.autocast(device_type='cuda'):
                     # Generate fake HR
-                    fake_hr = self.model(lr).detach()
+                    with torch.no_grad():
+                        fake_hr = self.model(lr)
                     
                     # Real and Fake passes
                     real_logits = self.discriminator(hr)
@@ -122,7 +127,8 @@ class GANTrainer(Trainer):
                 self.scaler_d.step(self.opt_d)
                 self.scaler_d.update()
             else:
-                fake_hr = self.model(lr).detach()
+                with torch.no_grad():
+                    fake_hr = self.model(lr)
                 real_logits = self.discriminator(hr)
                 fake_logits = self.discriminator(fake_hr)
                 loss_d_real = self.adversarial_loss(real_logits, is_real=True, label_smoothing=self.label_smoothing)
@@ -138,6 +144,8 @@ class GANTrainer(Trainer):
             # ---------------------
             # 2. Train Generator
             # ---------------------
+            # Freeze discriminator weights during the generator update while gradients still flow to the image.
+            self.discriminator.requires_grad_(False)
             self.optimizer.zero_grad(set_to_none=True)
             
             if self.amp:
@@ -147,6 +155,7 @@ class GANTrainer(Trainer):
                     
                     # G losses
                     p_loss = self.pixel_loss(fake_hr, hr)
+                    # The perceptual term compares feature maps from a frozen VGG network.
                     vgg_loss = self.perceptual_loss(fake_hr, hr)
                     
                     # Generator wants discriminator to think it's real
@@ -185,6 +194,8 @@ class GANTrainer(Trainer):
             epoch_loss_g += loss_g.item()
             pbar.set_postfix({"G_loss": f"{loss_g.item():.4f}", "D_loss": f"{loss_d.item():.4f}"})
             
+        self.discriminator.requires_grad_(True)
+
         # Step D scheduler as well
         if self.scheduler_d is not None:
             self.scheduler_d.step()
@@ -198,7 +209,7 @@ class GANTrainer(Trainer):
 
     def _save_checkpoint(self, filename: str):
         path = self.checkpoint_dir / filename
-        torch.save({
+        save_checkpoint({
             "epoch": self.start_epoch + len(self.history["train_loss_g"]) - 1,
             "model_state_dict": self.model.state_dict(),
             "discriminator_state_dict": self.discriminator.state_dict(),

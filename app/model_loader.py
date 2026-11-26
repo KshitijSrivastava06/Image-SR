@@ -1,174 +1,60 @@
-"""
-Model Loader — Centralized model loading with caching for Streamlit app.
+"""Load inference models and report which checkpoints are available."""
 
-Handles weight file resolution, CPU/GPU detection, cascaded inference for 8×, and graceful fallbacks.
-"""
-
-import sys
 from pathlib import Path
-from typing import Optional
 
 import torch
 
-# Add project root to path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
 from models import get_model
-from src.utils.common import get_device, get_model_size
-from src.utils.logger import get_logger
+from models.pretrained_weights import (
+    PRETRAINED_REGISTRY,
+    find_local_weights,
+    load_pretrained,
+)
+from src.utils.common import get_device
 
-logger = get_logger("model_loader")
-
-
-# Model names mapping
 MODEL_NAMES = ["bicubic", "srcnn", "srresnet", "srgan", "esrgan"]
+MODEL_LABELS = {
+    "bicubic": "Bicubic",
+    "srcnn": "SRCNN",
+    "srresnet": "SRResNet",
+    "srgan": "SRGAN",
+    "esrgan": "Real-ESRGAN",
+}
+
+
+def model_identifier(model_name: str) -> str:
+    name = model_name.lower()
+    # The UI names SRGAN and Real-ESRGAN by model. Inference instantiates their generators.
+    return f"{name}_generator" if name in ("srgan", "esrgan") else name
+
 
 def load_sr_model(
     model_name: str,
     scale_factor: int = 4,
-    weights_path: Optional[str] = None,
-    device: Optional[torch.device] = None,
+    weights_path: str | None = None,
+    device: torch.device | None = None,
 ) -> torch.nn.Module:
-    """
-    Load a super-resolution model with optional pretrained weights.
-
-    Args:
-        model_name:   One of 'bicubic', 'srcnn', 'srresnet', 'srgan', 'esrgan'.
-        scale_factor: Upscaling factor (2, 4, or 8).
-        weights_path: Optional explicit path to weight file.
-        device:       Compute device (auto-detected if None).
-
-    Returns:
-        Loaded model in eval mode on the specified device.
-    """
+    """Load an eval-mode model using a compatible checkpoint."""
     device = device or get_device()
-    name_lower = model_name.lower()
-    
-    if name_lower == "srgan":
-        name_lower = "srgan_generator"
-    elif name_lower == "esrgan":
-        name_lower = "esrgan_generator"
+    name = model_identifier(model_name)
+    # Bicubic is a fixed interpolation operation and has no learned weights.
+    if name == "bicubic":
+        return get_model(name, scale_factor=scale_factor).to(device).eval()
 
-    if name_lower == "bicubic":
-        from models import get_model
-        model = get_model("bicubic", scale_factor=scale_factor)
-        model = model.to(device).eval()
-    else:
-        from models import get_pretrained
-        model = get_pretrained(name_lower, scale_factor=scale_factor, device=device)
-
-    if weights_path and Path(weights_path).exists():
-        logger.info(f"Loading custom weights from {weights_path}")
-        state_dict = torch.load(weights_path, map_location="cpu", weights_only=False)
-        if "model_state_dict" in state_dict:
-            state_dict = state_dict["model_state_dict"]
-        elif "generator_state_dict" in state_dict:
-            state_dict = state_dict["generator_state_dict"]
-        if ("srresnet" in name_lower or "srgan" in name_lower) and getattr(model, "use_batchnorm", True) is False:
-            from models.srresnet import fold_srresnet_bn
-            state_dict = fold_srresnet_bn(state_dict)
-        model.load_state_dict(state_dict, strict=True)
-
-    size = get_model_size(model)
-    logger.info(
-        f"Loaded {model_name} on {device}: "
-        f"{size['total_params']:,} params, {size['size_mb']:.2f} MB"
+    return load_pretrained(
+        name, scale_factor, device, weights_path=Path(weights_path) if weights_path else None,
     )
-
-    if name_lower != "bicubic":
-        validation = validate_model_weights(model, scale_factor=scale_factor)
-        if not validation["valid"]:
-            logger.warning(f"Model validation check failed for {model_name}: {validation}")
-        else:
-            logger.info(f"Model sanity validation passed for {model_name} (diff_from_bicubic: {validation.get('diff_from_bicubic', 0):.4f})")
-
-    return model
 
 
 def list_available_models() -> list[str]:
-    """Return list of available model names."""
-    return MODEL_NAMES
+    return MODEL_NAMES.copy()
 
 
-def get_weight_status() -> dict[str, bool]:
-    """Check which models have pretrained or trained weights available."""
-    from models.pretrained_weights import PRETRAINED_REGISTRY
-    status = {}
-    for name in MODEL_NAMES:
-        if name == "bicubic":
-            status[name] = True
-            continue
-            
-        reg_name = name
-        if name in ("srgan", "esrgan"):
-            reg_name = f"{name}_generator"
-            
-        key = f"{reg_name}_x4"
-            
-        if key in PRETRAINED_REGISTRY and PRETRAINED_REGISTRY[key].get("url"):
-            status[name] = True
-        else:
-            # Check local fallback locations
-            local_paths = [
-                PROJECT_ROOT / f"models/{name}/final.pth",
-                PROJECT_ROOT / f"outputs/checkpoints/{name}/best_model.pth",
-                PROJECT_ROOT / f"outputs/checkpoints/{name}/final.pth",
-            ]
-            status[name] = any(p.exists() for p in local_paths)
-            
+def get_weight_status(scale_factor: int = 4) -> dict[str, bool]:
+    """Report whether each model can be used at the selected scale."""
+    status = {"bicubic": True}
+    for name in MODEL_NAMES[1:]:
+        identifier = model_identifier(name)
+        entry = PRETRAINED_REGISTRY.get(f"{identifier}_x{scale_factor}", {})
+        status[name] = bool(entry.get("url") or find_local_weights(identifier, scale_factor))
     return status
-
-
-def validate_model_weights(model: torch.nn.Module, scale_factor: int = 4) -> dict:
-    """
-    Validate that a loaded model produces sane outputs on test inputs.
-    
-    Checks:
-    1. Output shape matches scale_factor
-    2. No NaNs or Infs
-    3. Output values are within [0, 1] range
-    4. Non-trivial spatial variance (output is not a solid blank color)
-    5. No extreme saturation on high-brightness inputs
-    """
-    device = next(model.parameters(), torch.tensor([])).device if list(model.parameters()) else torch.device("cpu")
-    dummy = torch.rand(1, 3, 32, 32, device=device)
-    dummy_bright = torch.full((1, 3, 32, 32), 0.95, device=device)
-    
-    with torch.no_grad():
-        out = model(dummy)
-        out_bright = model(dummy_bright)
-        
-    has_nan = torch.isnan(out).any().item() or torch.isnan(out_bright).any().item()
-    has_inf = torch.isinf(out).any().item() or torch.isinf(out_bright).any().item()
-    val_min = min(out.min().item(), out_bright.min().item())
-    val_max = max(out.max().item(), out_bright.max().item())
-    val_std = out.std().item()
-    val_std_bright = out_bright.std().item()
-
-    # Compare against bicubic baseline interpolation
-    bicubic_ref = torch.nn.functional.interpolate(
-        dummy, scale_factor=scale_factor, mode="bicubic", align_corners=False
-    ).clamp(0.0, 1.0)
-    diff_from_bicubic = (out - bicubic_ref).abs().mean().item()
-    
-    is_valid = (
-        not has_nan 
-        and not has_inf 
-        and val_min >= -0.05 
-        and val_max <= 1.05 
-        and val_std > 0.01
-        and val_std_bright > 0.0
-    )
-    
-    return {
-        "valid": is_valid,
-        "has_nan": has_nan,
-        "has_inf": has_inf,
-        "min": val_min,
-        "max": val_max,
-        "std": val_std,
-        "std_bright": val_std_bright,
-        "diff_from_bicubic": diff_from_bicubic,
-    }
-

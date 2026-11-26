@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive super-resolution studio for CSET225 Image and Video Processing.">
+  <title>Image SR · Super-resolution Studio</title>
+  <link rel="stylesheet" href="/ui/studio.css">
+  <script src="/ui/studio.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-inner">
+      <a class="brand" href="#studio" aria-label="Image SR studio">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span>Image<span class="brand-accent">SR</span></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#studio" data-page="studio" aria-current="page">Studio</a>
+        <a href="#experiment" data-page="experiment">Experiment</a>
+        <a href="#models" data-page="models">Models</a>
+      </nav>
+      <span class="course">CSET225 <span class="separator"></span> Semester project</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="workspace" aria-labelledby="page-title">
+      <div class="intro">
+        <div>
+          <h1 id="page-title">Super-resolution studio</h1>
+          <p id="page-description">Restore detail in images and short videos with classical and learned methods.</p>
+        </div>
+        <div id="mode-tabs" class="segments" role="group" aria-label="Media type">
+          <button type="button" data-mode="image" aria-pressed="true">Image</button>
+          <button type="button" data-mode="video" aria-pressed="false">Video</button>
+        </div>
+      </div>
+
+      <div class="workbench">
+        <section class="card viewer" aria-labelledby="viewer-title">
+          <div class="viewer-head">
+            <div>
+              <h2 id="viewer-title">Image comparison</h2>
+              <p id="viewer-note">Drag to compare the low-resolution input and the enhanced output.</p>
+            </div>
+            <button type="button" id="zoom" class="soft-button" aria-pressed="false">Zoom 2×</button>
+            <div id="video-views" class="segments" role="group" aria-label="Video comparison" hidden>
+              <button type="button" data-video-view="source" aria-pressed="false">Original</button>
+              <button type="button" data-video-view="result" aria-pressed="true">Enhanced</button>
+            </div>
+          </div>
+
+          <!-- The two images share one viewport. A range input changes how much of each image is visible. -->
+          <div id="compare" class="compare" style="--split: 48%">
+            <div class="layers">
+              <img id="before" src="/assets/demo-input.png" alt="Low-resolution input">
+              <img id="after" src="/assets/demo-after.png" alt="Enhanced output">
+            </div>
+            <span class="corner top-left" id="before-label">Low-resolution input</span>
+            <span class="corner top-right">Enhanced output</span>
+            <div class="divider" aria-hidden="true"><span class="grip">‹ ›</span></div>
+            <input type="range" id="reveal" min="0" max="100" value="48" aria-label="Before and after comparison position">
+          </div>
+          <div id="still-preview" class="plain-preview" hidden><img id="uploaded-preview" alt="Selected image preview"></div>
+          <div id="video-preview" class="plain-preview" hidden><video id="video-player" controls playsinline preload="metadata"></video></div>
+          <div class="viewer-foot">
+            <div class="sample-credit" id="sample-credit"><span class="sample-dot"></span><span>DIV2K sample · 0807</span></div>
+            <label id="reference-control" class="small-field" hidden>Compare with
+              <select id="reference-view" aria-label="Comparison reference">
+                <option value="input">Low-resolution input</option>
+                <option value="baseline">Bicubic</option>
+                <option value="reference">Ground truth</option>
+              </select>
+            </label>
+            <span id="image-dimensions">240 × 150 to 960 × 600</span>
+          </div>
+        </section>
+
+        <aside class="card settings" aria-labelledby="settings-title">
+          <div class="settings-head">
+            <h2 id="settings-title">Processing settings</h2>
+            <span id="device" class="device" hidden></span>
+          </div>
+          <!-- studio.js reads these controls and sends the selected file and settings to FastAPI. -->
+          <form id="settings-form">
+            <div class="field source-field">
+              <label class="field-label" for="file">Source</label>
+              <label class="dropzone" id="dropzone" for="file">
+                <span class="drop-symbol" aria-hidden="true">+</span>
+                <span id="upload-guide"><strong>Choose an image</strong><small>PNG, JPEG, WebP or BMP</small></span>
+              </label>
+              <input id="file" type="file" class="visually-hidden" accept=".png,.jpg,.jpeg,.webp,.bmp">
+              <button type="button" class="text-button" id="sample">Use sample image</button>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="model">Upscaling model</label>
+              <select id="model" name="model"><option value="esrgan">Real-ESRGAN</option><option value="bicubic">Bicubic</option></select>
+              <span class="field-note" id="model-note">Pretrained restoration for real-world images.</span>
+            </div>
+
+            <div class="field">
+              <span id="scale-label" class="field-label">Scale factor</span>
+              <div id="scales" class="segments scale" role="group" aria-labelledby="scale-label">
+                <button type="button" data-scale="2" aria-pressed="false">2×</button>
+                <button type="button" data-scale="4" aria-pressed="true">4×</button>
+              </div>
+            </div>
+
+            <details id="restoration">
+              <summary>Restoration controls</summary>
+              <div class="advanced">
+                <label>Spatial smoothing<select name="denoise"><option value="off">Off</option><option value="gaussian">Gaussian</option><option value="median">Median</option><option value="bilateral">Bilateral</option><option value="nlm">Non-local means</option></select></label>
+                <label>Intensity<select name="intensity"><option value="off">Off</option><option value="histogram">Histogram equalization</option><option value="clahe">CLAHE</option><option value="gamma">Gamma correction</option><option value="auto_wb">White balance</option></select></label>
+                <label>Sharpening<select name="sharpening"><option value="off">Off</option><option value="unsharp">Unsharp masking</option><option value="laplacian">Laplacian</option><option value="wiener">Wiener deblurring</option></select></label>
+                <label>Frequency filtering<select name="frequency"><option value="off">Off</option><option value="lowpass">Gaussian low-pass</option><option value="highboost">Gaussian high-boost</option></select></label>
+                <label id="cutoff-control" hidden>Cutoff (cycles/pixel) <output id="cutoff-value">0.12</output><input name="cutoff" type="range" min="0.03" max="0.4" step="0.01" value="0.12"></label>
+                <label class="check"><input name="deblock" type="checkbox"> JPEG deblocking</label>
+                <label class="check"><input name="refinement" type="checkbox"> Refine after upscaling</label>
+              </div>
+            </details>
+
+            <div id="experiment-options" class="field variant" hidden>
+              <label class="check"><input name="simulate" type="checkbox"> Simulate JPEG compression</label>
+              <label id="input-quality-control" hidden>JPEG quality <output id="input-quality-value">30</output><input name="input_quality" type="range" min="5" max="95" value="30"></label>
+            </div>
+
+            <div id="video-options" class="field variant" hidden>
+              <label for="crf">H.264 compression <output id="crf-value">20</output></label>
+              <input id="crf" name="crf" type="range" min="15" max="35" value="20">
+              <span class="field-note">Lower CRF retains more detail. Clips up to 15 s and 300 frames.</span>
+            </div>
+
+            <button id="run" class="primary-button" type="submit">Upscale image</button>
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+            <div class="export" id="export">
+              <button type="button" id="download" class="soft-button">Download PNG</button>
+              <select id="export-format" aria-label="Image export format"><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+            </div>
+            <label id="jpeg-control" class="field variant" hidden>Export quality <output id="jpeg-value">85</output><input type="range" id="jpeg-quality" min="5" max="95" value="85"></label>
+          </form>
+        </aside>
+      </div>
+
+      <!-- Only the reconstruction experiment supplies a ground-truth image for these scores. -->
+      <section class="card results" id="scores" aria-labelledby="scores-heading" hidden>
+        <div class="section-heading">
+          <h2 id="scores-heading">Reconstruction fidelity</h2>
+          <p>Measured against the same high-resolution reference. Higher scores mean closer agreement.</p>
+        </div>
+        <div class="metrics">
+          <article><h3>PSNR</h3><strong id="psnr-value">—</strong><p id="psnr-baseline"></p></article>
+          <article><h3>SSIM</h3><strong id="ssim-value">—</strong><p id="ssim-baseline"></p></article>
+        </div>
+      </section>
+
+      <!-- Diagnostics display data computed by the server after an image run. -->
+      <details class="card results" id="analysis" hidden>
+        <summary>Inspect edges, color and frequency</summary>
+        <p id="diagnostic-note">Edge maps compare the same center crop of Bicubic and the processed image.</p>
+        <div class="segments diagnostic-tabs" role="group" aria-label="Diagnostic">
+          <button type="button" data-diagnostic="edges" aria-pressed="true">Edges</button>
+          <button type="button" data-diagnostic="channels" aria-pressed="false">YCbCr</button>
+          <button type="button" data-diagnostic="histogram" aria-pressed="false">Histogram</button>
+          <button type="button" data-diagnostic="spectrum" aria-pressed="false">DFT spectrum</button>
+          <button type="button" data-diagnostic="stages" aria-pressed="false">Restoration</button>
+        </div>
+        <div id="edge-control"><label for="edge-method">Detector</label> <select id="edge-method"><option>Canny</option><option>Sobel</option></select></div>
+        <div id="restoration-actions" hidden>
+          <button type="button" class="soft-button" id="apply-restoration">Apply sharpening</button>
+          <button type="button" class="text-button" id="open-restoration">Open restoration controls</button>
+        </div>
+        <div id="diagnostic-images" class="diagnostic-grid"></div>
+        <div id="histogram-panel" hidden>
+          <canvas id="histogram" width="920" height="230" role="img" aria-label="Bicubic and processed luminance histograms"></canvas>
+          <div class="chart-key"><span>Bicubic</span><span>Processed</span></div>
+        </div>
+      </details>
+    </section>
+
+    <section id="models-page" class="models-page" aria-labelledby="models-heading" hidden>
+      <div class="intro">
+        <div>
+          <h1 id="models-heading">Models &amp; methods</h1>
+          <p>Checkpoint availability, measured DIV2K results, and syllabus coverage.</p>
+        </div>
+      </div>
+      <section class="card results" aria-labelledby="inventory-heading">
+        <div class="section-heading"><h2 id="inventory-heading">Model inventory</h2><p>Available scales are based on the local checkpoints.</p></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Model</th><th>Available scales</th><th>Weights</th></tr></thead>
+            <tbody id="model-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card results" aria-labelledby="benchmark-heading">
+        <div class="section-heading"><h2 id="benchmark-heading">DIV2K benchmark</h2><p id="benchmark-note"></p></div>
+        <div id="benchmark-table" class="table-scroll" hidden>
+          <table>
+            <thead><tr><th>Model</th><th>PSNR (dB)</th><th>SSIM</th><th>Mean processing</th></tr></thead>
+            <tbody id="benchmark-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card results" aria-labelledby="syllabus-heading">
+        <div class="section-heading"><h2 id="syllabus-heading">CSET225 syllabus</h2></div>
+        <dl class="syllabus">
+          <div><dt>Spatial sampling</dt><dd>Downsample a known reference and reconstruct at 2× or 4×.</dd></div>
+          <div><dt>Intensity transformations</dt><dd>Apply histogram equalization, CLAHE, or gamma correction.</dd></div>
+          <div><dt>Spatial filtering</dt><dd>Apply Gaussian or median smoothing before inference.</dd></div>
+          <div><dt>Edge detection</dt><dd>Compare Canny and Sobel maps on matched crops.</dd></div>
+          <div><dt>Color processing</dt><dd>Inspect the luminance and chroma channels in YCbCr.</dd></div>
+          <div><dt>Frequency-domain filtering</dt><dd>View 2D DFT spectra and try Gaussian low-pass or high-boost.</dd></div>
+          <div><dt>Compression and fidelity</dt><dd>Simulate JPEG degradation, then measure RGB PSNR and SSIM.</dd></div>
+          <div><dt>Video processing</dt><dd>Upscale sampled frames and export H.264 video with source audio.</dd></div>
+        </dl>
+      </section>
+    </section>
+
+    <footer><span>Image &amp; Video Processing</span><span>DIV2K · PyTorch · OpenCV</span></footer>
+  </main>
+</body>
+</html>

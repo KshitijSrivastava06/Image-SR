@@ -43,7 +43,7 @@ class Discriminator(nn.Module):
         in_channels: Number of input image channels (default: 3 for RGB).
     """
 
-    def __init__(self, in_channels: int = 3):
+    def __init__(self, in_channels: int = 3, pool_size: int = 6):
         super().__init__()
 
         # 8 conv blocks: channels grow 64 → 64 → 128 → 128 → 256 → 256 → 512 → 512
@@ -65,9 +65,9 @@ class Discriminator(nn.Module):
 
         # Dense head — AdaptiveAvgPool makes it input-size agnostic
         self.classifier = nn.Sequential(
-            nn.AdaptiveAvgPool2d(6),
+            nn.AdaptiveAvgPool2d(pool_size),
             nn.Flatten(),
-            nn.Linear(512 * 6 * 6, 1024),
+            nn.Linear(512 * pool_size**2, 1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, 1),
         )
@@ -91,6 +91,7 @@ class Discriminator(nn.Module):
         Returns:
             (B, 1) raw logits — pass through sigmoid for probabilities.
         """
+        # The discriminator outputs a real/fake logit used while training the generator.
         return self.classifier(self.features(x))
 
 

@@ -1,213 +1,138 @@
-"""
-Super-Resolution Platform — Comprehensive Benchmark Suite.
-
-Benchmarks all registered models (Bicubic, SRCNN, SRResNet, SRGAN, ESRGAN)
-against validation images, measuring PSNR, SSIM, Delta-vs-Bicubic, and latency.
-"""
+"""Measure reconstruction against folder-based high-resolution references."""
 
 import argparse
 import json
-import os
-import sys
-import time
+import math
 from pathlib import Path
+import sys
 
-# Ensure project root is in sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-import cv2
 import numpy as np
+from PIL import Image, ImageOps, UnidentifiedImageError
 import torch
-import torch.nn.functional as F
 
-from app.model_loader import load_sr_model
-from src.evaluation.metrics import MetricCalculator
-from src.utils.common import get_device, get_model_size
-from src.utils.logger import get_logger
-from src.utils.preprocessing import mod_crop
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-logger = get_logger("benchmark")
+from app.model_loader import MODEL_LABELS, get_weight_status, load_sr_model, model_identifier
+from src.evaluation.image_analysis import fidelity, sampling_pair
+from src.utils.common import get_device
+from src.utils.image_inference import ImageProcessor, MAX_OUTPUT_PIXELS
+from src.utils.inference_db import InferenceTracker
+
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
 def evaluate_models(
     image_dir: str,
-    models_to_test: list[str],
+    models_to_test: list[str] | None,
     scale_factor: int = 4,
     num_images: int = 5,
-    device: torch.device = None,
     output_dir: str = "outputs/metrics",
-):
-    device = device or get_device()
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
+) -> list[dict]:
+    folder = Path(image_dir)
+    if not folder.is_dir():
+        raise ValueError(f"Reference folder does not exist: {folder}")
+    if scale_factor not in (2, 4) or num_images < 0:
+        raise ValueError("Choose scale 2 or 4 and a nonnegative image count.")
 
-    img_dir_path = Path(image_dir)
-    if not img_dir_path.exists():
-        raise FileNotFoundError(f"Image directory not found: {image_dir}")
+    paths = sorted(path for path in folder.iterdir() if path.suffix.lower() in IMAGE_SUFFIXES)
+    status = get_weight_status(scale_factor)
+    names = list(dict.fromkeys(["bicubic", *(models_to_test or [n for n in status if status[n]])]))
+    unavailable = [name for name in names if not status.get(name)]
+    if unavailable:
+        raise ValueError(f"Missing compatible checkpoints for {', '.join(unavailable)} at {scale_factor}×.")
 
-    valid_extensions = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
-    files = sorted([f for f in img_dir_path.iterdir() if f.suffix.lower() in valid_extensions])
-
-    if not files:
-        raise RuntimeError(f"No valid images found in {image_dir}")
-
-    if num_images > 0:
-        files = files[:num_images]
-
-    logger.info(f"Loaded {len(files)} benchmark images from {image_dir}")
-    logger.info(f"Benchmarking models: {models_to_test} on device: {device}")
-
-    # Load all models
-    loaded_models = {}
-    for name in models_to_test:
+    device = get_device()
+    if device.type == "cpu":
+        torch.set_num_threads(min(torch.get_num_threads(), 4))
+    processors = {
+        name: ImageProcessor(
+            load_sr_model(name, scale_factor, device=device), model_identifier(name), scale_factor,
+        )
+        for name in names
+    }
+    measurements = {name: [] for name in names}
+    for path in paths:
         try:
-            logger.info(f"Loading model: {name} (scale={scale_factor})...")
-            m = load_sr_model(name, scale_factor=scale_factor, device=device)
-            m.eval()
-            loaded_models[name] = m
-        except Exception as e:
-            logger.error(f"Failed to load model {name}: {e}")
-
-    mc = MetricCalculator()
-    results = {name: {"psnr_hr": [], "ssim_hr": [], "psnr_bic": [], "times_ms": []} for name in loaded_models}
-
-    print("\n" + "=" * 80)
-    print(f"🔬 RUNNING BENCHMARK (Scale: {scale_factor}×, Images: {len(files)}, Device: {device})")
-    print("=" * 80)
-
-    for idx, fpath in enumerate(files, 1):
-        raw_bgr = cv2.imread(str(fpath), cv2.IMREAD_COLOR)
-        if raw_bgr is None:
+            with Image.open(path) as opened:
+                if opened.width * opened.height > MAX_OUTPUT_PIXELS:
+                    raise ValueError("Reference exceeds 16 megapixels.")
+                image = np.asarray(ImageOps.exif_transpose(opened).convert("RGB"))
+            # Derive a single LR input from the aligned reference and share it across models.
+            reference, low = sampling_pair(image, scale_factor)
+        except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
+            print(f"Skipping {path.name}. {exc}", file=sys.stderr)
             continue
-        hr_rgb = cv2.cvtColor(raw_bgr, cv2.COLOR_BGR2RGB)
-        hr_rgb = mod_crop(hr_rgb, scale_factor)
+        for name, processor in processors.items():
+            result = processor.process(low)
+            # Score raw model output against the same HR pixels for a fair comparison.
+            scores = fidelity(reference, result.image)
+            measurements[name].append((scores["PSNR (dB)"], scores["SSIM"], result.seconds * 1000))
+        print(f"Measured {path.name}")
+        if num_images and len(measurements["bicubic"]) >= num_images:
+            break
 
-        h, w = hr_rgb.shape[:2]
-        lr_w, lr_h = max(w // scale_factor, 1), max(h // scale_factor, 1)
-        lr_rgb = cv2.resize(hr_rgb, (lr_w, lr_h), interpolation=cv2.INTER_CUBIC)
+    count = len(measurements["bicubic"])
+    if count == 0:
+        raise ValueError(f"No usable reference images in {folder}.")
 
-        hr_t = torch.from_numpy(hr_rgb.astype(np.float32) / 255.0).permute(2, 0, 1).unsqueeze(0).to(device)
-        lr_t = torch.from_numpy(lr_rgb.astype(np.float32) / 255.0).permute(2, 0, 1).unsqueeze(0).to(device)
-
-        # Baseline bicubic upscale
-        bicubic_t = F.interpolate(lr_t, scale_factor=scale_factor, mode="bicubic", align_corners=False).clamp(0.0, 1.0)
-        bicubic_np = (bicubic_t.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255.0).round().astype(np.uint8)
-
-        print(f"[{idx}/{len(files)}] Processing {fpath.name} ({lr_w}x{lr_h} -> {w}x{h})...")
-
-        for name, model in loaded_models.items():
-            start_t = time.perf_counter()
-            with torch.no_grad():
-                if name.lower() == "bicubic":
-                    sr_t = bicubic_t
-                else:
-                    sr_t = model(lr_t).clamp(0.0, 1.0)
-            if device.type == "cuda":
-                torch.cuda.synchronize()
-            elapsed_ms = (time.perf_counter() - start_t) * 1000.0
-
-            sr_np = (sr_t.squeeze(0).permute(1, 2, 0).cpu().numpy() * 255.0).round().astype(np.uint8)
-
-            p_hr = mc.calculate_psnr(sr_np, hr_rgb)
-            s_hr = mc.calculate_ssim(sr_np, hr_rgb)
-            p_bic = mc.calculate_psnr(sr_np, bicubic_np)
-
-            results[name]["psnr_hr"].append(p_hr)
-            results[name]["ssim_hr"].append(s_hr)
-            results[name]["psnr_bic"].append(p_bic)
-            results[name]["times_ms"].append(elapsed_ms)
-
-    # Compute summary averages
+    average_baseline = float(np.mean([sample[0] for sample in measurements["bicubic"]]))
     summary = []
-    bicubic_mean_psnr = float(np.mean(results.get("bicubic", {}).get("psnr_hr", [28.5])))
-
-    for name in loaded_models:
-        mean_p_hr = float(np.mean(results[name]["psnr_hr"]))
-        mean_s_hr = float(np.mean(results[name]["ssim_hr"]))
-        mean_p_bic = float(np.mean(results[name]["psnr_bic"]))
-        mean_time = float(np.mean(results[name]["times_ms"]))
-        delta_p = mean_p_hr - bicubic_mean_psnr
-
-        # Health status
-        if name.lower() == "bicubic":
-            status = "Baseline"
-        elif delta_p > 1.0:
-            status = "Optimal (+{:.2f}dB)".format(delta_p)
-        elif delta_p >= -0.5 and name.lower() in ("srgan", "esrgan"):
-            status = "Perceptual Sharp (Expected PSNR drop)"
-        elif delta_p < 0.0:
-            status = "Undertrained ({:.2f}dB vs Bicubic)".format(delta_p)
-        else:
-            status = "Marginal (+{:.2f}dB)".format(delta_p)
-
-        summary.append({
-            "model": name.upper(),
-            "psnr_hr": mean_p_hr,
-            "ssim_hr": mean_s_hr,
-            "delta_vs_bicubic": delta_p,
-            "psnr_vs_bicubic": mean_p_bic,
-            "latency_ms": mean_time,
-            "status": status,
-        })
-
-    # Print summary table
-    print("\n" + "=" * 90)
-    print(f"{'Model':<12} {'PSNR (HR)':>10} {'SSIM (HR)':>10} {'Delta (dB)':>12} {'Latency':>10} {'Diagnosis':<30}")
-    print("-" * 90)
-    for row in summary:
-        delta_str = f"{row['delta_vs_bicubic']:+.2f} dB" if row['model'] != "BICUBIC" else "0.00 dB"
-        print(f"{row['model']:<12} {row['psnr_hr']:>9.2f}dB {row['ssim_hr']:>10.4f} {delta_str:>12} {row['latency_ms']:>8.1f}ms  {row['status']:<30}")
-    print("=" * 90 + "\n")
-
-    # Export markdown and json
-    md_lines = [
-        "# Model Benchmark Report",
-        f"- **Scale Factor**: {scale_factor}×",
-        f"- **Evaluation Dataset**: `{image_dir}` ({len(files)} images)",
-        f"- **Compute Device**: `{device}`",
-        f"- **Timestamp**: `{time.strftime('%Y-%m-%d %H:%M:%S')}`",
+    report = [
+        "# Reconstruction benchmark",
         "",
-        "| Model | PSNR vs HR (dB) | SSIM vs HR | Delta vs Bicubic | Latency (ms) | Quality Assessment |",
-        "| :--- | :---: | :---: | :---: | :---: | :--- |",
+        f"Dataset {folder.resolve()} · {count} images · {scale_factor}×",
+        "",
+        "| Model | Device | RGB PSNR (dB) | RGB SSIM | Δ PSNR vs Bicubic (dB) | Mean processing (ms) |",
+        "| --- | --- | ---: | ---: | ---: | ---: |",
     ]
-    for row in summary:
-        delta_str = f"{row['delta_vs_bicubic']:+.2f} dB" if row['model'] != "BICUBIC" else "—"
-        md_lines.append(
-            f"| **{row['model']}** | {row['psnr_hr']:.2f} dB | {row['ssim_hr']:.4f} | {delta_str} | {row['latency_ms']:.1f} ms | {row['status']} |"
+    tracker = InferenceTracker(ROOT / "outputs" / "inference_runs.db")
+    for name, values in measurements.items():
+        psnr, ssim, latency = map(float, np.mean(values, axis=0))
+        delta = 0.0 if psnr == average_baseline else psnr - average_baseline
+        model_device = str(processors[name].device)
+        summary.append({
+            "model": name, "scale": scale_factor, "device": model_device, "images": count,
+            "psnr_hr": psnr, "ssim_hr": ssim, "delta_vs_bicubic": delta, "latency_ms": latency,
+        })
+        report.append(
+            f"| {MODEL_LABELS[name]} | {model_device} | {psnr:.2f} | {ssim:.4f} | {delta:+.2f} | {latency:.1f} |",
         )
 
-    md_content = "\n".join(md_lines)
-    report_file = output_path / "benchmark_report.md"
-    report_file.write_text(md_content, encoding="utf-8")
-
-    json_file = output_path / "benchmark_report.json"
-    with open(json_file, "w", encoding="utf-8") as jf:
-        json.dump(summary, jf, indent=2)
-
-    logger.info(f"Saved benchmark report to {report_file} and {json_file}")
+    target = Path(output_dir)
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "benchmark_report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+    serializable = [
+        {key: str(value) if isinstance(value, float) and math.isinf(value) else value
+         for key, value in row.items()}
+        for row in summary
+    ]
+    (target / "benchmark_report.json").write_text(
+        json.dumps(serializable, indent=2, allow_nan=False) + "\n", encoding="utf-8",
+    )
+    for row in summary:
+        tracker.log_inference(
+            row["model"], scale_factor, row["device"], row["latency_ms"],
+            dataset_name=f"{folder.resolve()} ({count} images)", psnr=row["psnr_hr"], ssim=row["ssim_hr"],
+        )
+    print("\n".join(report))
     return summary
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Super-Resolution Platform Benchmark")
-    parser.add_argument("--image_dir", type=str, default="data/datasets/div2k/DIV2K_valid_HR", help="Path to evaluation images")
-    parser.add_argument("--models", nargs="+", default=["bicubic", "srcnn", "srresnet", "srgan", "esrgan"], help="Models to benchmark")
-    parser.add_argument("--scale", type=int, default=4, help="Upscaling scale factor (2 or 4)")
-    parser.add_argument("--num_images", type=int, default=5, help="Number of images to benchmark (0 for all)")
-    parser.add_argument("--output_dir", type=str, default="outputs/metrics", help="Directory to save benchmark reports")
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--image_dir", required=True, help="Folder containing high-resolution references")
+    parser.add_argument("--models", nargs="+", choices=tuple(MODEL_LABELS))
+    parser.add_argument("--scale", type=int, choices=[2, 4], default=4)
+    parser.add_argument("--num_images", type=int, default=5, help="Images to measure (0 for all)")
+    parser.add_argument("--output_dir", default="outputs/metrics")
     args = parser.parse_args()
-
-    evaluate_models(
-        image_dir=args.image_dir,
-        models_to_test=args.models,
-        scale_factor=args.scale,
-        num_images=args.num_images,
-        output_dir=args.output_dir,
-    )
+    try:
+        evaluate_models(args.image_dir, args.models, args.scale, args.num_images, args.output_dir)
+    except (OSError, ValueError, RuntimeError) as exc:
+        parser.exit(1, f"{exc}\n")
 
 
 if __name__ == "__main__":
     main()
-

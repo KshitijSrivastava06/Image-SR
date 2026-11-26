@@ -13,7 +13,7 @@ class ContrastEnhancer:
     Image contrast and visibility enhancement.
 
     Args:
-        method:   'clahe', 'gamma', or 'auto_wb'.
+        method:   'clahe', 'gamma', 'auto_wb', or 'histogram'.
         strength: Method-specific strength parameter.
     """
 
@@ -67,10 +67,11 @@ class ContrastEnhancer:
         """
         Gamma correction.
 
-        gamma < 1: brighter (lighten shadows)
-        gamma > 1: darker (darken highlights)
+        gamma > 1: brighter (lighten shadows)
+        gamma < 1: darker (darken highlights)
         """
         gamma = self.strength
+        # With this reciprocal convention, gamma above one brightens midtones.
         inv_gamma = 1.0 / gamma
 
         # Build lookup table
@@ -97,8 +98,7 @@ class ContrastEnhancer:
 
     def _histogram_eq(self, img: np.ndarray) -> np.ndarray:
         """Histogram equalization in YCrCb space."""
-        bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        ycrcb = cv2.cvtColor(bgr, cv2.COLOR_BGR2YCrCb)
+        ycrcb = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+        # Equalize Y only. Cr and Cb retain their original chroma values during this step.
         ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
-        enhanced = cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2BGR)
-        return cv2.cvtColor(enhanced, cv2.COLOR_BGR2RGB)
+        return cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)

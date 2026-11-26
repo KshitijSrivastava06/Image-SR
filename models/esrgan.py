@@ -86,6 +86,7 @@ class RRDB(nn.Module):
         out = self.db1(x)
         out = self.db2(out)
         out = self.db3(out)
+        # Residual scaling limits the amplitude of the correction inside each RRDB.
         return out * self.beta + x
 
 
@@ -187,6 +188,7 @@ class ESRGANGenerator(nn.Module):
         """
         # PixelUnshuffle for 2× mode: (B,3,H,W) → (B,12,H/2,W/2)
         if self.pixel_unshuffle is not None:
+            # The 2x checkpoint packs 2-by-2 RGB neighborhoods into channels before internal 4x upsampling.
             x = self.pixel_unshuffle(x)
 
         feat = self.conv_first(x)

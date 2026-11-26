@@ -16,6 +16,9 @@ venv.bak/
 data/datasets/
 outputs/
 models/*/final.pth
+!models/srcnn/final.pth
+!models/srresnet/final.pth
+!models/srgan/final.pth
 scratch/
 backups/
 *.bak

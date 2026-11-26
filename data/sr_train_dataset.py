@@ -91,12 +91,14 @@ class DIV2KTrainDataset(Dataset):
 
         # 3. Generate LR patch
         lr_h, lr_w = self.patch_size // self.scale_factor, self.patch_size // self.scale_factor
+        # Generate the paired LR input from exactly the same augmented HR patch.
         lr_patch = cv2.resize(hr_patch, (lr_w, lr_h), interpolation=cv2.INTER_CUBIC)
 
         # 4. To Tensor [0, 1]
         hr_tensor = torch.from_numpy(hr_patch.astype(np.float32) / 255.0).permute(2, 0, 1)
         lr_tensor = torch.from_numpy(lr_patch.astype(np.float32) / 255.0).permute(2, 0, 1)
 
+        # The DataLoader batches these aligned LR inputs and HR targets.
         return lr_tensor, hr_tensor
 
     def _augment(self, img: np.ndarray) -> np.ndarray:

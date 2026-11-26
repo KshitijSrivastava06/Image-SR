@@ -51,6 +51,7 @@ class ResidualBlock(nn.Module):
         self.block = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # A residual block learns a correction to its input feature map.
         res = self.block(x)
         if self.residual_clamp is not None:
             res = res.clamp(-self.residual_clamp, self.residual_clamp)
@@ -68,6 +69,7 @@ class UpsampleBlock(nn.Module):
         super().__init__()
         self.block = nn.Sequential(
             nn.Conv2d(channels, channels * 4, kernel_size=3, padding=1),
+            # Rearrange four groups of channels into a 2-by-2 grid of spatial positions.
             nn.PixelShuffle(upscale_factor=2),
             nn.PReLU(num_parameters=channels),
         )
@@ -241,7 +243,8 @@ class SRResNet(nn.Module):
         residual = self.post_residual(residual)
         if self.residual_clamp is not None:
             residual = residual.clamp(-self.residual_clamp, self.residual_clamp)
+        # The long skip connection carries initial features past the residual stack.
         out = initial + residual  # global skip connection
         out = self.upsample(out)
         out = self.final(out)
-        return out.clamp(0, 1)
+        return out if self.training else out.clamp(0, 1)

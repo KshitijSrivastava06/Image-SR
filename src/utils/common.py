@@ -7,6 +7,7 @@ and tensor/numpy conversion helpers used throughout the project.
 
 import os
 import random
+from tempfile import NamedTemporaryFile
 from pathlib import Path
 from typing import Optional, Union
 
@@ -118,6 +119,7 @@ def numpy_to_tensor(
     """
     if img.dtype == np.uint8:
         img = img.astype(np.float32) / 255.0
+    # Reorder HWC to CHW and add a one-image batch dimension.
     tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).float()
     if device is not None:
         tensor = tensor.to(device)
@@ -143,3 +145,19 @@ def ensure_dir(path: Union[str, Path]) -> Path:
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def save_checkpoint(state: dict, path: Path) -> None:
+    """Write a checkpoint next to its destination and publish it atomically."""
+    pending = None
+    try:
+        with NamedTemporaryFile(dir=path.parent, delete=False) as output:
+            pending = Path(output.name)
+            torch.save(state, output)
+        # Replace the checkpoint only after the temporary file has been written successfully.
+        pending.replace(path)
+    except (OSError, RuntimeError) as exc:
+        raise OSError(f"Could not save checkpoint {path}. Check disk space and write access.") from exc
+    finally:
+        if pending is not None:
+            pending.unlink(missing_ok=True)

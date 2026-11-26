@@ -1,872 +1,426 @@
-"""
-Super-Resolution Platform — Streamlit Web Application.
+"""Interactive image and video super-resolution coursework app."""
 
-Features:
-    - Image upload with drag-and-drop
-    - Model selection (Bicubic, SRCNN, SRResNet, SRGAN, ESRGAN)
-    - Scale factor selection (2x, 4x, 8x)
-    - Optional restoration pipeline (denoise, deblur, enhance)
-    - Before/After comparison view
-    - PSNR, SSIM, LPIPS metric display
-    - Download enhanced image
-    - Model comparison dashboard
-"""
-
-import sys
-import time
+from hashlib import sha256
+from io import BytesIO
 from pathlib import Path
+import sqlite3
+import sys
+from tempfile import TemporaryDirectory
+import time
 
+import cv2
+import imageio_ffmpeg
 import numpy as np
+import pandas as pd
+from PIL import Image, ImageOps
 import streamlit as st
 import torch
-from PIL import Image
+from skimage import data as sample_data
 
-# Add project root to path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-
-from app.model_loader import load_sr_model, list_available_models, get_weight_status
-from app.utils import (
-    format_metric,
-    get_image_info,
-    numpy_to_pil,
-    pil_to_bytes,
-    pil_to_numpy,
-    pil_to_tensor,
-    tensor_to_pil,
+from app.model_loader import MODEL_LABELS, get_weight_status, load_sr_model, model_identifier
+from src.evaluation.image_analysis import (
+    color_channels, edge_map, fidelity, jpeg_roundtrip, log_spectrum, sampling_pair,
 )
-from src.utils.preprocessing import mod_crop
-from models.pretrained_weights import PRETRAINED_REGISTRY
-from src.restoration import RestorationPipeline
-from src.utils.common import tensor_to_numpy
-from src.utils.inference_utils import postprocess_output, prepare_input
-from src.utils.tiled_inference import tiled_forward, supports_tiling
 from src.evaluation.metrics import MetricCalculator
-from src.restoration.post_processor import PostProcessor
+from src.utils.common import get_device
+from src.utils.image_inference import ImageProcessor, MAX_OUTPUT_PIXELS
+from src.utils.inference_db import InferenceTracker
+from src.utils.video import VIDEO_FORMATS, process_video
+
+DB_PATH = PROJECT_ROOT / "outputs" / "inference_runs.db"
+IMAGE_TYPES = ["png", "jpg", "jpeg", "webp", "bmp"]
+STAGE_LABELS = {
+    "input": "Input",
+    "jpeg_deblock": "JPEG deblocking",
+    "denoise": "Spatial smoothing",
+    "deblur": "Sharpening",
+    "enhance": "Intensity enhancement",
+    "frequency_filter": "Frequency filtering",
+}
+PROCESS_ERRORS = (ValueError, OSError, RuntimeError, StopIteration, Image.DecompressionBombError, cv2.error)
 
 
-# =====================================================================
-# Page Configuration
-# =====================================================================
-
-st.set_page_config(
-    page_title="AI Image Super-Resolution",
-    page_icon="🔬",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# Custom CSS for premium look
-st.markdown("""
-<style>
-    /* Dark-themed premium styling */
-    .stApp {
-        background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%);
-    }
-
-    /* Main header */
-    .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2.5rem;
-        font-weight: 800;
-        text-align: center;
-        padding: 1rem 0;
-        font-family: 'Inter', sans-serif;
-    }
-
-    .sub-header {
-        color: #a0aec0;
-        text-align: center;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
-
-    /* Metric cards */
-    .metric-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1.2rem;
-        text-align: center;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-    }
-
-    .metric-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .metric-label {
-        color: #a0aec0;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 0.3rem;
-    }
-
-    /* Status badges */
-    .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .status-ready {
-        background: rgba(72, 187, 120, 0.15);
-        color: #48bb78;
-        border: 1px solid rgba(72, 187, 120, 0.3);
-    }
-
-    .status-no-weights {
-        background: rgba(236, 201, 75, 0.15);
-        color: #ecc94b;
-        border: 1px solid rgba(236, 201, 75, 0.3);
-    }
-
-    /* Process button */
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 2rem;
-        font-weight: 600;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: rgba(15, 12, 41, 0.95);
-        border-right: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    /* Model info section */
-    .model-info {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 10px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-    }
-
-    /* Divider */
-    .divider {
-        border: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        margin: 1.5rem 0;
-    }
-
-    /* Hide default Streamlit footer */
-    footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
+@st.cache_resource(max_entries=4)
+def cached_model(name: str, scale: int):
+    device = get_device()
+    if device.type == "cpu":
+        torch.set_num_threads(min(torch.get_num_threads(), 4))
+    return load_sr_model(name, scale, device=device)
 
 
-# =====================================================================
-# Cached Model Loading
-# =====================================================================
-
-@st.cache_resource
-def cached_load_model_v2(model_name: str, scale_factor: int):
-    """Load and cache a model (persists across reruns)."""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    return load_sr_model(model_name, scale_factor, device=device)
+def make_processor(model: str, scale: int, settings: dict, refinement: float) -> ImageProcessor:
+    return ImageProcessor(
+        cached_model(model, scale), model_identifier(model), scale,
+        restoration=settings, refinement=refinement,
+    )
 
 
-# =====================================================================
-# Sidebar
-# =====================================================================
+def read_image(payload: bytes, scale: int) -> np.ndarray:
+    with Image.open(BytesIO(payload)) as opened:
+        if opened.width * opened.height * scale**2 > MAX_OUTPUT_PIXELS:
+            raise ValueError("Output would exceed 16 megapixels. Use a smaller image or scale.")
+        return np.asarray(ImageOps.exif_transpose(opened).convert("RGB"))
 
-def render_sidebar():
-    """Render the sidebar with configuration controls."""
-    with st.sidebar:
-        st.markdown("## ⚙️ Configuration")
-        st.markdown("---")
 
-        # Model Selection
-        st.markdown("### 🤖 Model")
-        model_name = st.selectbox(
-            "Select Model",
-            options=["Bicubic", "SRCNN", "SRResNet", "SRGAN", "ESRGAN"],
-            index=4,
-            help="Choose the super-resolution model",
-        )
-
-        # Model status
-        weight_status = get_weight_status()
-        model_key = model_name.lower()
-        if weight_status.get(model_key, False):
-            st.markdown('<span class="status-badge status-ready">✓ Ready</span>', unsafe_allow_html=True)
-        else:
-            st.markdown('<span class="status-badge status-no-weights">⚠ No Weights</span>', unsafe_allow_html=True)
-            st.caption("Model will use random weights. Train first or provide weights.")
-
-        # Model descriptions
-        descriptions = {
-            "Bicubic": "Classical interpolation baseline. Fast but lacks detail.",
-            "SRCNN": "3-layer CNN (~57K params). First DL baseline.",
-            "SRResNet": "16 residual blocks (~1.5M params). High PSNR.",
-            "SRGAN": "GAN-trained SRResNet. Perceptually sharp.",
-            "ESRGAN": "RRDB + RaGAN. Powered by Real-ESRGAN weights for best real-world results.",
-        }
-        st.caption(descriptions.get(model_name, ""))
-
-        st.markdown("---")
-
-        # Scale Factor
-        st.markdown("### 🔍 Scale Factor")
-        scale_factor = st.radio(
-            "Upscaling",
-            options=[2, 4],
-            index=1,
-            horizontal=True,
-            format_func=lambda x: f"{x}×",
-        )
-
-        # ESRGAN supports 2× and 4× with pretrained weights.
-        # Other models only have pretrained weights for 4×.
-        esrgan_supported = model_name.lower() == "esrgan" and scale_factor in (2, 4)
-        if scale_factor != 4 and model_name.lower() != "bicubic" and not esrgan_supported:
-            st.warning(
-                f"⚠️ Pretrained weights are trained for 4× only. "
-                f"At {scale_factor}×, random weights will be used and output quality will be poor."
-            )
-        elif model_name.lower() == "esrgan" and scale_factor == 2:
-            st.info("2× mode uses Real-ESRGAN x2plus pretrained weights.")
-
-        st.markdown("---")
-
-        # Restoration Pipeline
-        st.markdown("### 🔧 Restoration Pipeline")
-        st.caption("Pre-processing before super-resolution")
-
+def read_settings():
+    scale = st.sidebar.radio("Scale", [2, 4], horizontal=True, format_func=lambda x: f"{x}×")
+    status = get_weight_status(scale)
+    model = st.sidebar.selectbox(
+        "Upscaling method", [name for name, ready in status.items() if ready],
+        format_func=MODEL_LABELS.__getitem__,
+    )
+    with st.sidebar.expander("Restoration", expanded=True):
         preset = st.selectbox(
-            "Preset",
-            ["None", "Photo Cleanup", "Old Photo Restore", "JPEG Fix", "Custom"],
-            help="Auto-configure the restoration pipeline"
+            "Preset", ["None", "Photo Cleanup", "Old Photo Restore", "JPEG Fix", "Custom"],
+        )
+        settings = {
+            "None": {},
+            "Photo Cleanup": dict(denoise=True, denoise_method="nlm", denoise_strength=5),
+            "Old Photo Restore": dict(
+                denoise=True, denoise_method="nlm", denoise_strength=12,
+                enhance=True, enhance_method="clahe", enhance_strength=2.5,
+            ),
+            "JPEG Fix": dict(jpeg_deblock=True, jpeg_quality=40),
+            "Custom": {},
+        }[preset]
+        refinement = 0.0
+        if preset == "Custom":
+            refinement = custom_settings(settings)
+    return model, scale, settings, refinement
+
+
+def custom_settings(settings: dict) -> float:
+    if st.checkbox("JPEG deblocking"):
+        settings.update(
+            jpeg_deblock=True, jpeg_quality=st.slider("Estimated source JPEG quality", 10, 95, 45),
+        )
+    spatial = st.selectbox(
+        "Spatial smoothing", ["Off", "Gaussian", "Median", "Bilateral", "NLM"],
+    )
+    if spatial != "Off":
+        strength = (
+            st.slider("Kernel size", 3, 15, 5, step=2)
+            if spatial in ("Gaussian", "Median") else st.slider("Smoothing strength", 1, 20, 5)
+        )
+        settings.update(denoise=True, denoise_method=spatial.lower(), denoise_strength=strength)
+
+    intensity = st.selectbox(
+        "Intensity transformation", ["Off", "Histogram equalization", "CLAHE", "Gamma", "White balance"],
+    )
+    if intensity != "Off":
+        method = {
+            "Histogram equalization": "histogram", "White balance": "auto_wb",
+        }.get(intensity, intensity.lower())
+        strength = {
+            "gamma": lambda: st.slider("Gamma", 0.4, 3.0, 1.2, step=0.1),
+            "clahe": lambda: st.slider("CLAHE clip limit", 0.5, 5.0, 2.0, step=0.1),
+        }
+        settings.update(
+            enhance=True, enhance_method=method,
+            enhance_strength=strength[method]() if method in strength else 1.0,
         )
 
-        use_jpeg = False
-        jpeg_quality = 50
-        use_denoise = False
-        denoise_method = "nlm"
-        denoise_strength = 10
-        use_deblur = False
-        deblur_method = "unsharp"
-        deblur_strength = 1.5
-        use_enhance = False
-        enhance_method = "clahe"
-        enhance_strength = 2.0
-        use_post_process = True
-        post_process_strength = 0.5
-
-        if preset == "Photo Cleanup":
-            use_denoise, denoise_method, denoise_strength = True, "nlm", 5
-            use_post_process, post_process_strength = True, 0.4
-        elif preset == "Old Photo Restore":
-            use_denoise, denoise_method, denoise_strength = True, "nlm", 15
-            use_enhance, enhance_method, enhance_strength = True, "clahe", 3.0
-            use_post_process, post_process_strength = True, 0.7
-        elif preset == "JPEG Fix":
-            use_jpeg, jpeg_quality = True, 40
-            use_post_process, post_process_strength = True, 0.5
-        elif preset == "Custom":
-            with st.expander("Advanced Settings", expanded=True):
-                use_jpeg = st.checkbox("🧩 JPEG Deblock", value=False)
-                if use_jpeg:
-                    jpeg_quality = st.slider("JPEG Quality", 10, 100, 50, key="jpeg_q")
-                
-                use_denoise = st.checkbox("🔇 Denoise", value=False)
-                if use_denoise:
-                    denoise_method = st.selectbox(
-                        "Denoise Method", ["nlm", "median", "bilateral"],
-                        key="denoise_method",
-                    )
-                    denoise_strength = st.slider("Denoise Strength", 1, 30, 10, key="denoise_str")
-
-                use_deblur = st.checkbox("🌀 Deblur", value=False)
-                if use_deblur:
-                    deblur_method = st.selectbox(
-                        "Deblur Method", ["unsharp", "laplacian", "wiener"],
-                        key="deblur_method",
-                    )
-                    deblur_strength = st.slider("Deblur Strength", 0.5, 5.0, 1.5, key="deblur_str")
-
-                use_enhance = st.checkbox("✨ Contrast Enhance", value=False)
-                if use_enhance:
-                    enhance_method = st.selectbox(
-                        "Enhance Method", ["clahe", "gamma", "auto_wb", "histogram"],
-                        key="enhance_method",
-                    )
-                    enhance_strength = st.slider("Enhance Strength", 0.5, 5.0, 2.0, key="enhance_str")
-                
-                use_post_process = st.checkbox("🪄 Post-SR Refine", value=True)
-                if use_post_process:
-                    post_process_strength = st.slider("Refinement Strength", 0.1, 1.0, 0.5, key="pp_str")
-
-        st.markdown("---")
-
-        # About
-        st.markdown("### ℹ️ About")
-        st.caption(
-            "Deep Learning Image Super-Resolution Platform. "
-            "Built with PyTorch and Streamlit."
+    frequency = st.selectbox("Frequency filtering", ["Off", "Gaussian low-pass", "Gaussian high-boost"])
+    if frequency != "Off":
+        settings.update(
+            frequency_mode="lowpass" if frequency == "Gaussian low-pass" else "highboost",
+            frequency_cutoff=st.slider("Cutoff (cycles/pixel)", 0.03, 0.40, 0.12, step=0.01),
         )
-
-    return {
-        "model_name": model_name.lower(),
-        "scale_factor": scale_factor,
-        "preset": preset,
-        "jpeg_deblock": use_jpeg,
-        "jpeg_quality": jpeg_quality,
-        "denoise": use_denoise,
-        "denoise_method": denoise_method,
-        "denoise_strength": denoise_strength,
-        "deblur": use_deblur,
-        "deblur_method": deblur_method,
-        "deblur_strength": deblur_strength,
-        "enhance": use_enhance,
-        "enhance_method": enhance_method,
-        "enhance_strength": enhance_strength,
-        "post_process": use_post_process,
-        "post_process_strength": post_process_strength,
-    }
+        if settings["frequency_mode"] == "highboost":
+            settings["frequency_gain"] = st.slider("High-frequency gain", 0.1, 2.0, 0.7)
+    sharpening = st.selectbox("Deblurring and sharpening", ["Off", "Unsharp", "Laplacian", "Wiener"])
+    if sharpening != "Off":
+        settings.update(
+            deblur=True, deblur_method=sharpening.lower(),
+            deblur_strength=st.slider("Deblur strength", 0.1, 3.0, 0.6),
+        )
+    if st.checkbox("Post-SR refinement"):
+        return st.slider("Refinement amount", 0.1, 1.0, 0.4)
+    return 0.0
 
 
-# =====================================================================
-# Main Content
-# =====================================================================
+def show_images(parts):
+    for column, (label, image) in zip(st.columns(len(parts)), parts):
+        height, width = image.shape[:2]
+        column.image(image, caption=f"{label} · {width} × {height}", width="stretch")
 
-def render_main(config: dict):
-    """Render the main content area."""
-    # Header
-    st.markdown('<h1 class="main-header">🔬 AI Image Super-Resolution</h1>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="sub-header">Enhance image resolution using deep learning — '
-        'SRCNN • SRResNet • SRGAN • ESRGAN</p>',
-        unsafe_allow_html=True,
+
+def detail_crop(image: np.ndarray, width: int, height: int) -> np.ndarray:
+    y = (image.shape[0] - height) // 2
+    x = (image.shape[1] - width) // 2
+    return image[y:y + height, x:x + width]
+
+
+def show_diagnostics(baseline: np.ndarray, output: np.ndarray):
+    with st.expander("Compare edges, color and frequency"):
+        method = st.radio("Edge detector", ["Canny", "Sobel"], horizontal=True)
+        height, width = (min(dimension, 640) for dimension in output.shape[:2])
+        before = detail_crop(baseline, width, height)
+        after = detail_crop(output, width, height)
+        y_before, _, _ = color_channels(before)
+        y_after, cb, cr = color_channels(after)
+        st.caption("Diagnostics use the same center region of both outputs at native resolution.")
+        show_images([
+            (f"Bicubic · {method}", edge_map(y_before, method)),
+            (f"Processed · {method}", edge_map(y_after, method)),
+        ])
+        show_images([("Y · Luma", y_after), ("Cb · Blue chroma", cb), ("Cr · Red chroma", cr)])
+        st.line_chart(pd.DataFrame({
+            "Bicubic": np.bincount(y_before.ravel(), minlength=256),
+            "Processed": np.bincount(y_after.ravel(), minlength=256),
+        }), x_label="Luma level", y_label="Pixels")
+        show_images([
+            ("Bicubic · DFT log magnitude", log_spectrum(y_before)),
+            ("Processed · DFT log magnitude", log_spectrum(y_after)),
+        ])
+        st.caption("Each spectrum is windowed and scaled independently for display.")
+
+
+def show_image_export(output: np.ndarray, name: str):
+    format_name = st.radio("Export format", ["PNG", "JPEG"], horizontal=True)
+    if format_name == "JPEG":
+        quality = st.slider("JPEG export quality", 5, 95, 85)
+        payload, decoded = jpeg_roundtrip(output, quality)
+        psnr = format_value(MetricCalculator.calculate_psnr(decoded, output))
+        st.caption(f"4:2:0 JPEG · {len(payload) / 1024:.1f} KiB · {psnr} dB vs the uncompressed output")
+        suffix, mime = "jpg", "image/jpeg"
+    else:
+        buffer = BytesIO()
+        Image.fromarray(output).save(buffer, format="PNG")
+        payload = buffer.getvalue()
+        suffix, mime = "png", "image/png"
+    st.download_button(
+        "Download enhanced image", payload, f"{name}-enhanced.{suffix}", mime,
+        type="primary", on_click="ignore",
     )
 
-    # Tabs
-    tab_enhance, tab_dashboard = st.tabs(["🖼️ Enhance Image", "📊 Model Dashboard"])
 
-    with tab_enhance:
-        render_enhance_tab(config)
-
-    with tab_dashboard:
-        render_dashboard_tab()
+def format_value(value: float | None, decimals: int = 2) -> str:
+    if value is None:
+        return "—"
+    return "∞" if np.isinf(value) else f"{value:.{decimals}f}"
 
 
-def render_enhance_tab(config: dict):
-    """Render the image enhancement tab."""
-    # File Upload
-    uploaded_file = st.file_uploader(
-        "Upload an image to enhance",
-        type=["png", "jpg", "jpeg", "bmp", "webp"],
-        help="Drag and drop or click to upload. Supports PNG, JPG, BMP, WebP.",
+def show_fidelity(scores):
+    columns = st.columns(2)
+    for column, (metric, decimals) in zip(columns, (("PSNR (dB)", 2), ("SSIM", 4))):
+        processed = scores["Processed"][metric]
+        bicubic = scores["Bicubic"][metric]
+        column.metric(metric, format_value(processed, decimals))
+        column.caption(f"Bicubic {format_value(bicubic, decimals)}")
+    st.caption("Both scores use the aligned high-resolution reference on RGB pixels.")
+
+
+def render_image_page(model, scale, settings, refinement, experiment=False):
+    st.title("Reconstruction experiment" if experiment else "Image super-resolution")
+    st.caption(
+        "Create a low-resolution sample from a known reference and measure reconstruction fidelity."
+        if experiment else "Restore a low-resolution image and compare the result with bicubic interpolation."
     )
-
-    if uploaded_file is None:
-        # Show placeholder
-        st.markdown(
-            """
-            <div style="
-                border: 2px dashed rgba(102, 126, 234, 0.3);
-                border-radius: 16px;
-                padding: 4rem 2rem;
-                text-align: center;
-                margin: 2rem 0;
-                background: rgba(255, 255, 255, 0.02);
-            ">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📤</div>
-                <div style="color: #a0aec0; font-size: 1.1rem;">
-                    Upload an image to get started
-                </div>
-                <div style="color: #718096; font-size: 0.9rem; margin-top: 0.5rem;">
-                    Supports PNG, JPG, BMP, WebP
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    sample = st.checkbox("Use the sample photo", value=experiment)
+    upload = None if sample else st.file_uploader(
+        "High-resolution reference" if experiment else "Low-resolution image", type=IMAGE_TYPES,
+    )
+    if not sample and upload is None:
         return
 
-    # Load and display original image
-    original_image = Image.open(uploaded_file).convert("RGB")
-    img_np = np.array(original_image)
-    
-    # Display image metadata
-    st.info(f"Image loaded: {original_image.width}×{original_image.height} pixels.")
-    
-    # Auto-Detect Image Quality
-    with st.expander("📊 Auto-Detect Image Quality", expanded=False):
-        from src.restoration.auto_detect import ImageQualityAnalyzer
-        analyzer = ImageQualityAnalyzer()
-        analysis = analyzer.analyze(img_np)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f"**Blur:** {'Detected' if analysis['is_blurry'] else 'None'}")
-            st.markdown(f"**Noise:** {'Detected' if analysis['is_noisy'] else 'Low'}")
-        with col2:
-            st.markdown(f"**JPEG Compression:** {'High' if analysis['is_jpeg_heavy'] else 'Normal'}")
-            st.markdown(f"**Suggested Preset:** `{analysis['recommended_preset']}`")
-        
-        if analysis['recommended_preset'] != "None":
-            st.warning(analysis['reason'] + f" Consider selecting the **{analysis['recommended_preset']}** preset in the sidebar.")
+    name = "sample" if sample else Path(upload.name).stem
+    payload = b"" if sample else upload.getvalue()
+    source_id = "sample" if sample else sha256(payload).hexdigest()
+    jpeg_quality = None
+    if experiment and st.checkbox("Simulate JPEG compression on the low-resolution input"):
+        jpeg_quality = st.slider("Input JPEG quality", 5, 95, 30)
 
+    try:
+        image = sample_data.astronaut() if sample else read_image(payload, 1 if experiment else scale)
+        if sample and not experiment:
+            _, image = sampling_pair(image, 4)
+        reference = None
+        if experiment:
+            reference, image = sampling_pair(image, scale)
+        if jpeg_quality is not None:
+            encoded, image = jpeg_roundtrip(image, jpeg_quality)
+            st.caption(f"Low-resolution JPEG · {len(encoded) / 1024:.1f} KiB")
+    except PROCESS_ERRORS as error:
+        st.error(f"Could not prepare image. {error}")
+        return
 
-    # Invalidate cached results when image changes
-    img_hash = hash(uploaded_file.getvalue())
-    if st.session_state.get("_last_img_hash") != img_hash:
-        for k in ("sr_result", "metrics", "elapsed"):
-            st.session_state.pop(k, None)
-        st.session_state["_last_img_hash"] = img_hash
+    height, width = image.shape[:2]
+    st.caption(f"{width} × {height} → {width * scale} × {height * scale} · {MODEL_LABELS[model]}")
+    if reference is not None and reference.shape != (height * scale, width * scale, 3):
+        st.error("The reference could not be aligned with the sample.")
+        return
 
-    img_info = get_image_info(original_image)
+    key = (source_id, experiment, model, scale, tuple(settings.items()), refinement, jpeg_quality)
+    state = st.session_state.get("image_run")
+    if state and state[0] != key:
+        st.session_state.pop("image_run")
+        state = None
 
-    col_info1, col_info2, col_info3 = st.columns(3)
-    with col_info1:
-        st.metric("Original Size", f"{img_info['width']}×{img_info['height']}")
-    with col_info2:
-        expected_w = img_info["width"] * config["scale_factor"]
-        expected_h = img_info["height"] * config["scale_factor"]
-        st.metric("Output Size", f"{expected_w}×{expected_h}")
-    with col_info3:
-        st.metric("Model", config["model_name"].upper())
+    if st.button("Run experiment" if experiment else "Enhance image", type="primary"):
+        try:
+            with st.spinner("Processing image…"):
+                processor = make_processor(model, scale, settings, refinement)
+                result = processor.process(image, intermediates=True)
+                baseline = result.image
+                if model != "bicubic" or settings or refinement:
+                    baseline = make_processor("bicubic", scale, {}, 0).process(image).image
 
-    # Invalidate cached results when config changes
-    config_key = (
-        f"{config['model_name']}_{config['scale_factor']}_"
-        f"{config['denoise']}_{config['denoise_method']}_{config['denoise_strength']}_"
-        f"{config['deblur']}_{config['deblur_method']}_{config['deblur_strength']}_"
-        f"{config['enhance']}_{config['enhance_method']}_{config['enhance_strength']}"
-    )
-    if st.session_state.get("_last_config_key") != config_key:
-        for k in ("sr_result", "metrics", "elapsed"):
-            st.session_state.pop(k, None)
-        st.session_state["_last_config_key"] = config_key
+                scores = {}
+                if reference is not None:
+                    scores["Processed"] = fidelity(reference, result.image)
+                    scores["Bicubic"] = (
+                        scores["Processed"] if baseline is result.image else fidelity(reference, baseline)
+                    )
+            state = key, result, baseline, scores
+            st.session_state["image_run"] = state
+            processed_scores = scores.get("Processed", {})
+            try:
+                InferenceTracker(DB_PATH).log_inference(
+                    model, scale, str(processor.device), result.seconds * 1000,
+                    input_filename=name, input_width=width, input_height=height,
+                    psnr=processed_scores.get("PSNR (dB)"), ssim=processed_scores.get("SSIM"),
+                )
+            except (OSError, sqlite3.Error):
+                st.warning("The result is ready. The local run history could not be saved.")
+        except PROCESS_ERRORS as error:
+            st.error(f"Could not process image. {error}")
+            return
 
-    # Process button
-    col_btn, _ = st.columns([1, 3])
-    with col_btn:
-        process = st.button("🚀 Enhance Image", use_container_width=True, type="primary")
+    if state is None:
+        st.image(image, caption="Low-resolution input", width=min(width * 2, 440))
+        return
 
-    if process:
-        _run_enhancement(original_image, config, uploaded_file.name if hasattr(uploaded_file, "name") else "unknown")
-    elif "sr_result" in st.session_state:
-        # Show cached results (only when config and image match)
-        _display_results(
-            original_image,
-            st.session_state["sr_result"],
-            st.session_state.get("metrics", {}),
-            st.session_state.get("elapsed", 0),
-            intermediates=st.session_state.get("intermediates"),
-            model_name=config.get("model_name", ""),
-        )
-
-
-@torch.no_grad()
-def _run_enhancement(original_image: Image.Image, config: dict, input_filename: str = "unknown"):
-    """Run the full enhancement pipeline."""
-    progress = st.progress(0, text="Loading model...")
-
-    # Step 1: Load model
-    model = load_sr_model(config["model_name"], config["scale_factor"])
-    # Determine device from system availability (simpler and correct for all model types)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    progress.progress(20, text="Model loaded. Preparing image...")
-
-    img_np = pil_to_numpy(original_image)
-    use_restoration = config["jpeg_deblock"] or config["denoise"] or config["deblur"] or config["enhance"]
-
-    # Step 2: Mod-crop & Restoration pipeline
-    # Mod-crop prevents checkerboard artifacts from PixelShuffle
-    img_np = mod_crop(img_np, config["scale_factor"])
-    
-    intermediates = {}
-    if use_restoration:
-        progress.progress(30, text="Running restoration pipeline...")
-        from src.restoration.pipeline import RestorationPipeline
-        pipeline = RestorationPipeline(
-            jpeg_deblock=config["jpeg_deblock"],
-            jpeg_quality=config["jpeg_quality"],
-            denoise=config["denoise"],
-            denoise_method=config["denoise_method"],
-            denoise_strength=config["denoise_strength"],
-            deblur=config["deblur"],
-            deblur_method=config["deblur_method"],
-            deblur_strength=config["deblur_strength"],
-            enhance=config["enhance"],
-            enhance_method=config["enhance_method"],
-            enhance_strength=config["enhance_strength"],
-        )
-        img_np, intermediates = pipeline.process(img_np, return_intermediates=True)
-
-    progress.progress(50, text="Running super-resolution...")
-
-    # Step 3: Super-resolution
-    lr_tensor = pil_to_tensor(numpy_to_pil(img_np), device=device)
-    
-    # Apply color space / normalization formatting based on model
-    lr_tensor = prepare_input(lr_tensor, config["model_name"], config["scale_factor"], PRETRAINED_REGISTRY)
-
-    start_time = time.perf_counter()
-    
-    # Determine inference mode: tiled vs direct
-    tile_size = config.get("tile_size", 256)
-    tile_overlap = config.get("tile_overlap", 16)
-    
-    # Only use tiled inference if model supports it (no BatchNorm) and either:
-    # 1) Image is very large (> 1024x1024), or
-    # 2) Model is heavy (ESRGAN) where tile processing prevents GPU OOM
-    is_large_image = (original_image.width * original_image.height > 1024 * 1024)
-    model_is_esrgan = config["model_name"].lower() in ("esrgan", "esrgan_generator")
-    use_tiling = (
-        tile_size > 0 
-        and supports_tiling(model)
-        and (is_large_image or (model_is_esrgan and original_image.width * original_image.height > 512 * 512))
-    )
-
-    if use_tiling:
-        sr_tensor = tiled_forward(model, lr_tensor, tile_size=tile_size, overlap=tile_overlap, scale_factor=config["scale_factor"])
+    _, result, baseline, scores = state
+    st.subheader("Results")
+    st.caption(f"Processing time {result.seconds:.2f} s")
+    if reference is not None:
+        show_fidelity(scores)
+        show_images([("Ground truth", reference), ("Bicubic", baseline), ("Processed", result.image)])
     else:
-        sr_tensor = model(lr_tensor)
-        
-    if device.type == "cuda":
-        torch.cuda.synchronize()
-    elapsed = time.perf_counter() - start_time
+        show_images([("Input", image), ("Bicubic", baseline), ("Processed", result.image)])
 
-    # Reverse color space / normalization formatting
-    sr_tensor = postprocess_output(sr_tensor, config["model_name"], config["scale_factor"], PRETRAINED_REGISTRY)
-
-    # Convert to numpy for post-processing/metrics
-    sr_np = tensor_to_numpy(sr_tensor)
-    sr_np = (sr_np * 255.0).clip(0, 255).astype(np.uint8)
-
-    # Step 3.5: Post-SR Refinement
-    if config["post_process"]:
-        progress.progress(75, text="Refining output...")
-        pp = PostProcessor(strength=config["post_process_strength"])
-        sr_np = pp.process(sr_np)
-
-    progress.progress(80, text="Computing metrics...")
-
-    # Convert result to PIL for display
-    sr_image = numpy_to_pil(sr_np)
-
-    # Step 4: Compute similarity metrics vs bicubic baseline
-    # NOTE: These compare SR output against bicubic upscale, NOT a ground-truth HR image.
-    # True PSNR/SSIM require a ground-truth HR reference.
-    metrics = {}
-    try:
-        mc = MetricCalculator()
-        from PIL import Image as PILImage
-        ref = original_image.resize(
-            (sr_image.width, sr_image.height),
-            PILImage.BICUBIC,
-        )
-        ref_np = np.array(ref)
-
-        if sr_np.shape == ref_np.shape:
-            metrics["psnr"] = mc.calculate_psnr(sr_np, ref_np)
-            metrics["ssim"] = mc.calculate_ssim(sr_np, ref_np)
-        else:
-            st.warning(
-                f"Metric shape mismatch: SR={sr_np.shape} vs ref={ref_np.shape}. "
-                f"Metrics skipped."
+    if result.intermediates:
+        with st.expander("View restoration stages"):
+            stage = st.selectbox(
+                "Pipeline stage", list(result.intermediates), format_func=STAGE_LABELS.__getitem__,
             )
-    except Exception as exc:
-        st.warning(f"Metric computation failed: {exc}")
+            st.image(result.intermediates[stage], width="stretch")
+    show_diagnostics(baseline, result.image)
+    show_image_export(result.image, name)
 
-    metrics["inference_time"] = elapsed
 
-    progress.progress(100, text="Done!")
-
-    # Log to SQLite DB
+def write_demo_clip(path: Path):
+    photo = sample_data.astronaut()[10:370:3, 60:444:3].copy()
+    writer = imageio_ffmpeg.write_frames(str(path), (96, 72), fps=12, macro_block_size=1)
     try:
-        from src.utils.inference_db import InferenceTracker
-        tracker = InferenceTracker()
-        
-        tracker.log_inference(
-            model_arch=config["model_name"],
-            scale_factor=config["scale_factor"],
-            device=device.type,
-            inference_time_ms=elapsed * 1000,
-            input_filename=input_filename,
-            input_width=original_image.width,
-            input_height=original_image.height,
-            psnr=metrics.get("psnr"),
-            ssim=metrics.get("ssim"),
-        )
-    except Exception as exc:
-        st.warning(f"Database logging failed: {exc}")
+        writer.send(None)
+        for offset in range(24):
+            writer.send(np.ascontiguousarray(photo[12:84, offset:offset + 96]))
+    finally:
+        writer.close()
 
-    # Cache results
-    st.session_state["sr_result"] = sr_image
-    st.session_state["metrics"] = metrics
-    st.session_state["elapsed"] = elapsed
-    st.session_state["intermediates"] = intermediates if 'intermediates' in locals() else {}
 
-    _display_results(
-        original_image,
-        sr_image,
-        metrics,
-        elapsed,
-        st.session_state["intermediates"],
-        model_name=config.get("model_name", ""),
+def render_video_page(model, scale, settings, refinement):
+    st.title("Video super-resolution")
+    st.caption("Enhance each frame and export an H.264 MP4 with the first audio track, when present.")
+    sample = st.checkbox("Use the sample clip")
+    upload = None if sample else st.file_uploader(
+        "Video clip", type=[ext[1:] for ext in VIDEO_FORMATS], max_upload_size=50,
     )
+    crf = st.slider("H.264 compression (CRF)", 15, 35, 20, help="Lower values retain more detail.")
+    st.caption("Up to 15 seconds, 300 frames, and 2.1 megapixels per output frame.")
+    if upload is None and not sample:
+        return
+    name = "sample" if sample else Path(upload.name).stem
+    payload = b"" if sample else upload.getvalue()
+    source_id = "sample" if sample else sha256(payload).hexdigest()
+    key = (source_id, model, scale, tuple(settings.items()), refinement, crf)
+    state = st.session_state.get("video_run")
+    if state and state[0] != key:
+        st.session_state.pop("video_run")
+        state = None
 
+    if st.button("Enhance video", type="primary"):
+        progress = st.progress(0.0, "Preparing clip…")
+        started = time.perf_counter()
+        try:
+            processor = make_processor(model, scale, settings, refinement)
+            with TemporaryDirectory() as directory:
+                source = Path(directory) / ("source.mp4" if sample else f"source{Path(upload.name).suffix}")
+                output = Path(directory) / "output.mp4"
+                if sample:
+                    write_demo_clip(source)
+                else:
+                    source.write_bytes(payload)
+                result = process_video(
+                    source, output, processor, crf=crf,
+                    progress=lambda done, total: progress.progress(
+                        min(0.98, done / total), f"Processing frame {done}",
+                    ),
+                )
+                state = key, result, output.read_bytes(), time.perf_counter() - started
+                st.session_state["video_run"] = state
+        except PROCESS_ERRORS as error:
+            st.error(f"Could not process video. {error}")
+            return
+        finally:
+            progress.empty()
 
-def _display_results(
-    original: Image.Image,
-    sr_image: Image.Image,
-    metrics: dict,
-    elapsed: float,
-    intermediates: dict = None,
-    model_name: str = "",
-):
-    """Display enhancement results with before/after comparison and optional pipeline steps."""
-    st.markdown("---")
-    st.markdown("### 📊 Results")
-
-    # Metrics row
-    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-    with col_m1:
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-value">{elapsed*1000:.0f}ms</div>
-                <div class="metric-label">Inference Time</div>
-            </div>""",
-            unsafe_allow_html=True,
+    if state is not None:
+        _, result, encoded, seconds = state
+        st.subheader("Results")
+        width, height = result.output_size
+        st.caption(
+            f"{width} × {height} · {result.frame_count} frames · {result.fps:g} fps · "
+            f"{seconds:.2f} s processing · {len(encoded) / 1024:.1f} KiB"
         )
-    with col_m2:
-        psnr_val = metrics.get("psnr", 0)
-        psnr_display = "\u221e" if psnr_val == float("inf") else f"{psnr_val:.2f}"
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-value">{psnr_display}dB</div>
-                <div class="metric-label">PSNR vs Bicubic</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-    with col_m3:
-        ssim_val = metrics.get("ssim", 0)
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-value">{ssim_val:.4f}</div>
-                <div class="metric-label">SSIM vs Bicubic</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-    with col_m4:
-        st.markdown(
-            f"""<div class="metric-card">
-                <div class="metric-value">{sr_image.width}×{sr_image.height}</div>
-                <div class="metric-label">Output Size</div>
-            </div>""",
-            unsafe_allow_html=True,
+        st.video(encoded)
+        show_images([("First input frame", result.input_frame), ("First processed frame", result.output_frame)])
+        st.download_button(
+            "Download enhanced video", encoded, f"{name}-enhanced.mp4", "video/mp4",
+            type="primary", on_click="ignore",
         )
 
-    st.caption("ℹ️ *PSNR and SSIM are calculated against a Bicubic upscale of the input image (no ground-truth HR image is available). Perceptually sharper models like SRGAN/ESRGAN add realistic high-frequency textures that naturally diverge from smooth bicubic baseline.*")
 
-    # Health indicator for near-identity outputs
-    if model_name.lower() in ("srcnn", "srresnet", "srgan") and psnr_val > 42.0:
-        st.info("💡 **Model Quality Advisory:** Output is mathematically very close to bicubic interpolation. Deep models will add more distinct high-frequency textures and sharpness once fully trained.")
-
-    st.markdown("")
-
-    # Before / After comparison
-    st.markdown("### 🔄 Before & After")
-    col_before, col_after = st.columns(2)
-
-    with col_before:
-        st.markdown("**Original**")
-        st.image(original, use_container_width=True)
-        st.caption(f"{original.width}×{original.height}")
-
-    with col_after:
-        st.markdown("**Enhanced**")
-        st.image(sr_image, use_container_width=True)
-        st.caption(f"{sr_image.width}×{sr_image.height}")
-
-    # Download button
-    st.markdown("---")
-    img_bytes = pil_to_bytes(sr_image, format="PNG")
-    st.download_button(
-        label="⬇️ Download Enhanced Image",
-        data=img_bytes,
-        file_name="enhanced_image.png",
-        mime="image/png",
-        use_container_width=True,
-    )
-
-    # Optional Pipeline Visualization
-    if intermediates and len(intermediates) > 1:
-        st.markdown("<br>", unsafe_allow_html=True)
-        with st.expander("🔍 Pipeline Steps Visualization", expanded=False):
-            st.markdown("See the intermediate output after each active restoration step.")
-            steps = list(intermediates.keys())
-            
-            # Show steps in columns
-            cols = st.columns(len(steps))
-            for i, (step_name, img_arr) in enumerate(intermediates.items()):
-                with cols[i]:
-                    st.image(img_arr, caption=step_name.replace("_", " ").title(), use_container_width=True)
-                    if i < len(steps) - 1:
-                        st.markdown("<div style='text-align:center;'>⬇️</div>", unsafe_allow_html=True)
-
-
-# =====================================================================
-# Dashboard Tab
-# =====================================================================
-
-def render_dashboard_tab():
-    """Render the model comparison dashboard."""
-    st.markdown("### 📊 Model Comparison Dashboard")
-    st.markdown("Compare super-resolution models across key metrics.")
-
-    # Model comparison table
-    import pandas as pd
-
-    data = {
-        "Model": ["Bicubic", "SRCNN", "SRResNet", "SRGAN", "ESRGAN"],
-        "Architecture": [
-            "Classical Interpolation",
-            "3-layer CNN",
-            "16 Residual Blocks",
-            "ResNet + Discriminator",
-            "23 RRDB + RaGAN",
-        ],
-        "Parameters": ["0", "~57K", "~1.5M", "~1.5M + 4.2M", "~16.7M + 4.2M"],
-        "Loss Function": [
-            "N/A",
-            "MSE",
-            "L1",
-            "L1 + VGG + BCE",
-            "L1 + VGG + RaGAN",
-        ],
-        "Typical PSNR (×4)": [
-            "~28.4 dB",
-            "~30.5 dB",
-            "~32.0 dB",
-            "~29.4 dB",
-            "~28.8 dB",
-        ],
-        "Typical SSIM (×4)": [
-            "~0.810",
-            "~0.862",
-            "~0.903",
-            "~0.847",
-            "~0.838",
-        ],
-        "Perceptual Quality": [
-            "⭐",
-            "⭐⭐",
-            "⭐⭐⭐",
-            "⭐⭐⭐⭐",
-            "⭐⭐⭐⭐⭐",
-        ],
-    }
-
-    df = pd.DataFrame(data)
-    st.dataframe(df, use_container_width=True, hide_index=True)
-
-    # Architecture comparison
-    st.markdown("---")
-    st.markdown("### 🏗️ Architecture Progression")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("""
-        **PSNR-Oriented Models** (Higher PSNR, smoother output):
-        - **Bicubic** → Classical, no learning
-        - **SRCNN** → First deep learning approach
-        - **SRResNet** → Deep residual learning, skip connections
-
-        These models optimize pixel-level accuracy (L1/MSE loss),
-        producing high PSNR but sometimes over-smooth textures.
-        """)
-
-    with col2:
-        st.markdown("""
-        **Perceptual-Oriented Models** (Lower PSNR, sharper textures):
-        - **SRGAN** → Adversarial training for realism
-        - **ESRGAN** → RRDB + relativistic discriminator
-
-        These models add perceptual and adversarial losses,
-        generating sharper textures at the cost of slightly lower PSNR.
-        ESRGAN produces the most visually convincing results.
-        """)
-
-    # Check benchmark results from database
-    st.markdown("---")
-    st.markdown("### 📈 Benchmark Results")
-    
+def render_models_page():
+    st.title("Models and benchmarks")
+    x2, x4 = get_weight_status(2), get_weight_status(4)
+    st.dataframe([
+        {"Model": MODEL_LABELS[name], "2×": "Available" if x2[name] else "Training required",
+         "4×": "Available" if x4[name] else "Training required"}
+        for name in MODEL_LABELS
+    ], hide_index=True, width="stretch")
+    st.subheader("Recorded dataset benchmarks")
     try:
-        from src.utils.inference_db import InferenceTracker
-        tracker = InferenceTracker()
-        benchmark_df = tracker.get_benchmark_stats()
-        
-        if not benchmark_df.empty:
-            st.dataframe(benchmark_df, use_container_width=True, hide_index=True)
-
-            # Bar charts
-            if "avg_psnr" in benchmark_df.columns:
-                col_c1, col_c2 = st.columns(2)
-                
-                # We can group by model_arch for simple bar charts
-                summary_df = benchmark_df.groupby("model_arch")[["avg_psnr", "avg_ssim"]].mean()
-                
-                with col_c1:
-                    st.bar_chart(summary_df["avg_psnr"])
-                    st.caption("PSNR Comparison (Higher is better)")
-                with col_c2:
-                    st.bar_chart(summary_df["avg_ssim"])
-                    st.caption("SSIM Comparison (Higher is better)")
+        records = InferenceTracker(DB_PATH).get_benchmark_stats()
+        if records.empty:
+            st.caption("Run the dataset benchmark command in the README to populate this table.")
         else:
-            st.info(
-                "No benchmark results found in the database. Run the benchmark to see actual comparison data:\n\n"
-                "```python\nfrom src.evaluation.benchmark import BenchmarkRunner\n"
-                "runner = BenchmarkRunner(models, test_loader)\n"
-                "runner.save_to_db('DatasetName')\n```"
-            )
-    except Exception as exc:
-        st.error(f"Failed to load benchmark results from database: {exc}")
+            st.dataframe(records, hide_index=True, width="stretch")
+    except (OSError, sqlite3.Error, pd.errors.DatabaseError):
+        st.warning("The local benchmark history could not be opened.")
 
-
-# =====================================================================
-# Entry Point
-# =====================================================================
 
 def main():
-    config = render_sidebar()
-    render_main(config)
+    st.set_page_config(page_title="Image & Video Super-Resolution", layout="wide")
+    st.sidebar.title("Super-resolution")
+    page = st.sidebar.radio(
+        "Workspace", ["Image", "Experiment", "Video", "Models and benchmarks"],
+    )
+    if page == "Models and benchmarks":
+        render_models_page()
+    else:
+        options = read_settings()
+        if page == "Video":
+            render_video_page(*options)
+        else:
+            render_image_page(*options, experiment=page == "Experiment")
 
 
 if __name__ == "__main__":
-    main()
-else:
-    # When run via `streamlit run`, __name__ is the module path
     main()

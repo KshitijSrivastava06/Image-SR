@@ -90,8 +90,10 @@ class SRCNN(nn.Module):
         )
 
         # 3-layer CNN refinement
+        # The three learned convolutions extract patches, map features, and reconstruct RGB.
         out = self.feature_extraction(x)
         out = self.mapping(out)
         out = self.reconstruction(out)
 
-        return out.clamp(0, 1)
+        # Keep training gradients outside the image range and clamp only the inference output.
+        return out if self.training else out.clamp(0, 1)

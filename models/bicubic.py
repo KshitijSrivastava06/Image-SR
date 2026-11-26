@@ -33,6 +33,7 @@ class BicubicUpsampler(nn.Module):
         Returns:
             Upscaled tensor of shape (B, C, H*s, W*s).
         """
+        # Each output sample is a cubic-weighted estimate from neighboring input pixels.
         return torch.nn.functional.interpolate(
             x,
             scale_factor=self.scale_factor,

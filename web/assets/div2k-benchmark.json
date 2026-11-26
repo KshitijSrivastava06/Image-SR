@@ -1,0 +1,52 @@
+[
+  {
+    "model": "bicubic",
+    "scale": 4,
+    "device": "cpu",
+    "images": 13,
+    "psnr_hr": 24.218000233300845,
+    "ssim_hr": 0.7147582953330216,
+    "delta_vs_bicubic": 0.0,
+    "latency_ms": 2.2132230716614196
+  },
+  {
+    "model": "srcnn",
+    "scale": 4,
+    "device": "cpu",
+    "images": 13,
+    "psnr_hr": 17.221723747767065,
+    "ssim_hr": 0.5514055101025558,
+    "delta_vs_bicubic": -6.99627648553378,
+    "latency_ms": 26.23013846235923
+  },
+  {
+    "model": "srresnet",
+    "scale": 4,
+    "device": "cpu",
+    "images": 13,
+    "psnr_hr": 19.883495822145576,
+    "ssim_hr": 0.474836866283623,
+    "delta_vs_bicubic": -4.334504411155269,
+    "latency_ms": 152.17682307747265
+  },
+  {
+    "model": "srgan",
+    "scale": 4,
+    "device": "cpu",
+    "images": 13,
+    "psnr_hr": 19.995790715623965,
+    "ssim_hr": 0.4680712216724592,
+    "delta_vs_bicubic": -4.22220951767688,
+    "latency_ms": 156.64427692536265
+  },
+  {
+    "model": "esrgan",
+    "scale": 4,
+    "device": "cpu",
+    "images": 13,
+    "psnr_hr": 23.229243923773733,
+    "ssim_hr": 0.6866946465064367,
+    "delta_vs_bicubic": -0.9887563095271119,
+    "latency_ms": 511.3784384604794
+  }
+]

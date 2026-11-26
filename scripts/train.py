@@ -12,19 +12,21 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import argparse
+import random
 import yaml
 
 import torch
+import numpy as np
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from data.dataset_manager import DatasetDownloader
 from data import DIV2KTrainDataset, SRTestDataset
-from models import get_model, get_pretrained
+from models import get_model
 from models.srgan import Discriminator
 from src.training import Trainer, GANTrainer
 from src.utils.logger import get_logger
-from src.utils.common import get_device
+from src.utils.common import get_device, save_checkpoint
 
 logger = get_logger("train_script")
 
@@ -56,9 +58,22 @@ def build_scheduler(sched_config: str, optimizer: optim.Optimizer, config: dict)
     return None
 
 
+def initialize_reconstruction(layer: torch.nn.Conv2d):
+    torch.nn.init.normal_(layer.weight, std=0.002)
+    torch.nn.init.constant_(layer.bias, 0.5)
+
+
 def run_training(config_path: str, resume_path: str = None):
     config = load_config(config_path)
     device = get_device()
+    if "seed" in config:
+        seed = config["seed"]
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+    if device.type == "cuda":
+        torch.backends.cudnn.benchmark = True
+        torch.set_float32_matmul_precision("high")
     
     model_name = config["model"]["name"]
     scale_factor = config["model"]["scale_factor"]
@@ -90,17 +105,18 @@ def run_training(config_path: str, resume_path: str = None):
         batch_size=config["data"]["batch_size"], 
         shuffle=True, 
         num_workers=config["data"].get("num_workers", 4),
-        pin_memory=True
+        pin_memory=device.type == "cuda"
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=1,
         shuffle=False,
         num_workers=config["data"].get("num_workers", 4),
-        pin_memory=True
+        pin_memory=device.type == "cuda"
     )
     
     # 2. Model
+    # Use the YAML architecture settings to build the model and later reconstruct it for inference.
     model_kwargs = {k: v for k, v in config["model"].items() if k not in ("name", "generator_weights")}
     if model_name == "srgan":
         generator = get_model("srgan_generator", **model_kwargs).to(device)
@@ -120,11 +136,14 @@ def run_training(config_path: str, resume_path: str = None):
                 state_dict = ckpt.get("model_state_dict", ckpt.get("generator_state_dict", ckpt))
                 if getattr(generator, "use_batchnorm", True) is False:
                     from models.srresnet import fold_srresnet_bn
-                    state_dict = fold_srresnet_bn(state_dict)
+                    state_dict = fold_srresnet_bn(state_dict, num_blocks=generator.num_residual_blocks)
+                # Warm-start SRGAN from SRResNet so adversarial training begins with a working reconstructor.
                 generator.load_state_dict(state_dict)
                 logger.info(f"Loaded generator warm-start weights from {weights_target}")
             
-        discriminator = Discriminator().to(device)
+        if config.get("initialize_output") and (not config["model"].get("generator_weights") or weights_target is None):
+            initialize_reconstruction(generator.final)
+        discriminator = Discriminator(pool_size=config["training"].get("discriminator_pool_size", 6)).to(device)
         
         opt_g = build_optimizer(
             config["training"]["generator"]["optimizer"],
@@ -159,11 +178,14 @@ def run_training(config_path: str, resume_path: str = None):
             amp=config["training"].get("amp", False),
             grad_clip=config["training"].get("grad_clip", 1.0),
             checkpoint_dir=config["output"]["checkpoint_dir"],
-            early_stopping_patience=config["training"].get("early_stopping_patience", 50)
+            early_stopping_patience=config["training"].get("early_stopping_patience", 50),
+            perceptual_feature_layer=config["training"].get("perceptual_feature_layer", 35),
         )
         
     else:
         model = get_model(model_name, **model_kwargs).to(device)
+        if config.get("initialize_output"):
+            initialize_reconstruction(model.reconstruction if model_name == "srcnn" else model.final)
         
         opt = build_optimizer(
             config["training"]["optimizer"],
@@ -194,44 +216,42 @@ def run_training(config_path: str, resume_path: str = None):
     if resume_path:
         trainer.load_checkpoint(resume_path)
         
-    # 3. Train
+    best_path = Path(config["output"]["checkpoint_dir"]) / "best_model.pth"
+    previous_best = best_path.stat().st_mtime_ns if best_path.is_file() else None
+    interrupted = False
     try:
         trainer.train()
     except KeyboardInterrupt:
-        logger.warning(f"Training interrupted by user. Preserving best weights for {model_name}...")
-    finally:
-        # 4. Save Final Weights (Preferring Best Checkpoint over Last Epoch)
-        final_dir = Path(f"models/{model_name}")
+        interrupted = True
+        logger.info("Training interrupted. Exporting weights from completed epochs.")
+
+    if trainer.history["train_loss"]:
+        state_dict = trainer.model.state_dict()
+        best = None
+        if best_path.is_file() and best_path.stat().st_mtime_ns != previous_best:
+            best = torch.load(best_path, map_location="cpu", weights_only=True)
+            # Export the generator for SRGAN. Its discriminator is needed only during training.
+            state_dict = best.get("model_state_dict", best.get("generator_state_dict"))
+
+        final_dir = Path("models") / model_name
+        if scale_factor != 4:
+            final_dir /= f"x{scale_factor}"
         final_dir.mkdir(parents=True, exist_ok=True)
-        
-        ckpt_dir = Path(config["output"]["checkpoint_dir"])
-        best_ckpt_path = ckpt_dir / "best_model.pth"
-        
-        final_sd = None
-        if best_ckpt_path.exists():
-            try:
-                ckpt_data = torch.load(best_ckpt_path, map_location="cpu", weights_only=False)
-                if "model_state_dict" in ckpt_data:
-                    final_sd = ckpt_data["model_state_dict"]
-                elif "generator_state_dict" in ckpt_data:
-                    final_sd = ckpt_data["generator_state_dict"]
-                logger.info(f"Loaded best checkpoint weights from {best_ckpt_path} for final deployment")
-            except Exception as e:
-                logger.warning(f"Could not load best_model.pth, falling back to current state: {e}")
+        metadata = dict(config.get("provenance", {}))
+        metadata.update(
+            epochs_completed=len(trainer.history["train_loss"]),
+            selected_epoch=best["epoch"] if best is not None
+            else trainer.start_epoch + len(trainer.history["train_loss"]) - 1,
+            validation_psnr=trainer.history["val_psnr"],
+            validation_ssim=trainer.history["val_ssim"],
+        )
+        save_checkpoint({
+            "model_state_dict": state_dict, "model_kwargs": model_kwargs, "provenance": metadata,
+        }, final_dir / "final.pth")
+        logger.info(f"Saved trained {model_name} weights to {final_dir / 'final.pth'}")
 
-        if final_sd is None:
-            if model_name == "srgan":
-                final_sd = generator.state_dict()
-            else:
-                final_sd = model.state_dict()
-
-        target_m = generator if model_name == "srgan" else model
-        if ("srresnet" in model_name.lower() or "srgan" in model_name.lower()) and getattr(target_m, "use_batchnorm", True) is False:
-            from models.srresnet import fold_srresnet_bn
-            final_sd = fold_srresnet_bn(final_sd)
-            
-        torch.save(final_sd, final_dir / "final.pth")
-        logger.info(f"Saved optimized final {model_name} weights to {final_dir / 'final.pth'}")
+    if interrupted:
+        raise KeyboardInterrupt
 
 
 def main():

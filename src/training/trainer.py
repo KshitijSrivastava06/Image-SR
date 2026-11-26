@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.evaluation.metrics import MetricCalculator
+from src.utils.common import save_checkpoint
 from src.utils.logger import get_logger
 
 logger = get_logger("trainer")
@@ -99,6 +100,7 @@ class Trainer:
                 logger.info(f"Validation - PSNR: {val_psnr:.2f} dB, SSIM: {val_ssim:.4f}")
                 
                 # Checkpointing and Early Stopping
+                # Validation PSNR selects the checkpoint. The benchmark set is used later.
                 if val_psnr > self.best_psnr:
                     self.best_psnr = val_psnr
                     self.patience_counter = 0
@@ -125,6 +127,7 @@ class Trainer:
             lr = lr.to(self.device, non_blocking=True)
             hr = hr.to(self.device, non_blocking=True)
             
+            # Clear the previous batch's gradients before the new backward pass.
             self.optimizer.zero_grad(set_to_none=True)
             
             if self.amp:
@@ -166,6 +169,7 @@ class Trainer:
             hr = hr.to(self.device, non_blocking=True)
             
             sr = self.model(lr)
+            # Clamp reconstructed pixels before measuring validation fidelity.
             sr = sr.clamp(0, 1)
             
             # Convert to numpy (H, W, C) for metric calculator
@@ -181,7 +185,7 @@ class Trainer:
 
     def _save_checkpoint(self, filename: str):
         path = self.checkpoint_dir / filename
-        torch.save({
+        save_checkpoint({
             "epoch": self.start_epoch + len(self.history["train_loss"]) - 1, # The epoch that just finished
             "model_state_dict": self.model.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
@@ -219,7 +223,7 @@ class Trainer:
             from models.srresnet import fold_srresnet_bn
             sd = fold_srresnet_bn(sd)
             
-        torch.save(sd, export_path)
+        save_checkpoint(sd, export_path)
         logger.info(f"Exported best weights to {export_path}")
         return True
 

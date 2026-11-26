@@ -85,15 +85,17 @@ class InferenceTracker:
         """Aggregate PSNR/SSIM grouped by model_arch and dataset_name."""
         with sqlite3.connect(self.db_path) as conn:
             query = '''
-                SELECT 
-                    model_arch, 
+                SELECT
+                    model_arch,
                     dataset_name,
+                    scale_factor,
+                    device,
                     COUNT(*) as num_runs,
                     AVG(psnr) as avg_psnr,
                     AVG(ssim) as avg_ssim,
                     AVG(inference_time_ms) as avg_inference_time_ms
                 FROM inference_runs
                 WHERE dataset_name IS NOT NULL AND psnr IS NOT NULL
-                GROUP BY model_arch, dataset_name
+                GROUP BY model_arch, dataset_name, scale_factor, device
             '''
             return pd.read_sql_query(query, conn)

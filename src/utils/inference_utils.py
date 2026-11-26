@@ -71,8 +71,7 @@ def postprocess_output(tensor: torch.Tensor, model_name: str, scale_factor: int,
 
 def pad_to_mod(tensor: torch.Tensor, scale_factor: int) -> tuple[torch.Tensor, int, int]:
     """
-    Pad tensor so its H and W are divisible by scale_factor to prevent 
-    PixelShuffle checkerboard artifacts.
+    Pad the bottom and right edges to the model's input alignment.
     
     Returns:
         padded_tensor: The reflection-padded tensor.
@@ -80,6 +79,7 @@ def pad_to_mod(tensor: torch.Tensor, scale_factor: int) -> tuple[torch.Tensor, i
         pad_w: Amount of padding added to width.
     """
     _, _, h, w = tensor.size()
+    # The modulo expression gives the smallest right/bottom padding, including zero when aligned.
     pad_h = (scale_factor - h % scale_factor) % scale_factor
     pad_w = (scale_factor - w % scale_factor) % scale_factor
     
@@ -87,7 +87,9 @@ def pad_to_mod(tensor: torch.Tensor, scale_factor: int) -> tuple[torch.Tensor, i
         return tensor, 0, 0
         
     # Pad format: (left, right, top, bottom)
-    padded = F.pad(tensor, (0, pad_w, 0, pad_h), mode='reflect')
+    # Reflect padding needs enough original pixels. Replicate edges for tiny images.
+    mode = "reflect" if pad_h < h and pad_w < w else "replicate"
+    padded = F.pad(tensor, (0, pad_w, 0, pad_h), mode=mode)
     return padded, pad_h, pad_w
 
 
