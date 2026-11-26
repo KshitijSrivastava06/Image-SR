@@ -41,33 +41,30 @@ class Discriminator(nn.Module):
 
     Args:
         in_channels: Number of input image channels (default: 3 for RGB).
+        pool_size: Spatial size of the pooled classifier input.
+        num_channels: Number of channels in the first convolution.
     """
 
-    def __init__(self, in_channels: int = 3, pool_size: int = 6):
+    def __init__(self, in_channels: int = 3, pool_size: int = 6, num_channels: int = 64):
         super().__init__()
 
-        # 8 conv blocks: channels grow 64 → 64 → 128 → 128 → 256 → 256 → 512 → 512
-        # Stride alternates 1, 2, 1, 2 ... to halve spatial size every 2 blocks.
+        # Stride alternates between 1 and 2 to halve the size every two blocks.
         self.features = nn.Sequential(
-            # Block 1 — no BN on first layer (standard practice)
-            *_conv_block(in_channels,  64,  stride=1, batch_norm=False),
-            *_conv_block(64,           64,  stride=2),
-            # Block 2
-            *_conv_block(64,           128, stride=1),
-            *_conv_block(128,          128, stride=2),
-            # Block 3
-            *_conv_block(128,          256, stride=1),
-            *_conv_block(256,          256, stride=2),
-            # Block 4
-            *_conv_block(256,          512, stride=1),
-            *_conv_block(512,          512, stride=2),
+            *_conv_block(in_channels, num_channels, stride=1, batch_norm=False),
+            *_conv_block(num_channels, num_channels, stride=2),
+            *_conv_block(num_channels, 2 * num_channels, stride=1),
+            *_conv_block(2 * num_channels, 2 * num_channels, stride=2),
+            *_conv_block(2 * num_channels, 4 * num_channels, stride=1),
+            *_conv_block(4 * num_channels, 4 * num_channels, stride=2),
+            *_conv_block(4 * num_channels, 8 * num_channels, stride=1),
+            *_conv_block(8 * num_channels, 8 * num_channels, stride=2),
         )
 
         # Dense head — AdaptiveAvgPool makes it input-size agnostic
         self.classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(pool_size),
             nn.Flatten(),
-            nn.Linear(512 * pool_size**2, 1024),
+            nn.Linear(8 * num_channels * pool_size**2, 1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(1024, 1),
         )

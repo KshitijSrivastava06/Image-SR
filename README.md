@@ -48,10 +48,10 @@ Video processing uses FFmpeg and keeps at most the current frame and the first-f
 
 ## Training and dataset benchmarks
 
-The included presentation checkpoints use a short CPU training run on all 800 DIV2K training originals from `archive`, taking a deterministic 160 × 160 crop per image and sampling 64 × 64 patches for SRCNN and SRResNet and 48 × 48 patches for SRGAN. It selects checkpoints using 13 validation crops. The 13 benchmark crops use different DIV2K validation originals.
+The included SRCNN, SRResNet, and SRGAN checkpoints learn brightness detail while carrying input chroma through interpolation. They use antialiased Bicubic downsampling to build training pairs, matching the Experiment mode. Training uses a deterministic 160 × 160 crop from each of the 800 DIV2K training originals in `archive`, with 64 × 64 training patches for SRCNN and SRResNet and 48 × 48 patches for SRGAN. The training script selects checkpoints using 13 validation crops. The 13 benchmark crops use different DIV2K validation originals.
 
 ```powershell
-python scripts/train_presentation.py --epochs 5 8 1
+python scripts/train_presentation.py --epochs 8 12 2
 python scripts/verify_models.py
 python scripts/benchmark.py --image_dir outputs/presentation/benchmark --scale 4 --num_images 0 --output_dir outputs/presentation/metrics
 ```

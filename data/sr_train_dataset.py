@@ -10,6 +10,7 @@ from typing import Tuple
 
 import cv2
 import numpy as np
+from PIL import Image
 import torch
 from torch.utils.data import Dataset
 from src.utils.logger import get_logger
@@ -36,11 +37,13 @@ class DIV2KTrainDataset(Dataset):
         patch_size: int = 96,
         scale_factor: int = 4,
         cache_in_ram: bool = True,
+        antialias: bool = False,
     ):
         self.hr_dir = Path(hr_dir)
         self.patch_size = patch_size
         self.scale_factor = scale_factor
         self.cache_in_ram = cache_in_ram
+        self.antialias = antialias
 
         self.files = sorted(
             f for f in self.hr_dir.iterdir()
@@ -92,7 +95,10 @@ class DIV2KTrainDataset(Dataset):
         # 3. Generate LR patch
         lr_h, lr_w = self.patch_size // self.scale_factor, self.patch_size // self.scale_factor
         # Generate the paired LR input from exactly the same augmented HR patch.
-        lr_patch = cv2.resize(hr_patch, (lr_w, lr_h), interpolation=cv2.INTER_CUBIC)
+        if self.antialias:
+            lr_patch = np.asarray(Image.fromarray(hr_patch).resize((lr_w, lr_h), Image.Resampling.BICUBIC))
+        else:
+            lr_patch = cv2.resize(hr_patch, (lr_w, lr_h), interpolation=cv2.INTER_CUBIC)
 
         # 4. To Tensor [0, 1]
         hr_tensor = torch.from_numpy(hr_patch.astype(np.float32) / 255.0).permute(2, 0, 1)

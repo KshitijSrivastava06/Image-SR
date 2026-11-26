@@ -24,6 +24,8 @@ from typing import Optional, Dict
 import torch
 import torch.nn as nn
 
+from models.luminance import add_luminance_detail
+
 
 class ResidualBlock(nn.Module):
     """
@@ -34,10 +36,14 @@ class ResidualBlock(nn.Module):
         use_batchnorm: If True, include BatchNorm layers. Defaults to False.
     """
 
-    def __init__(self, channels: int = 64, use_batchnorm: bool = False, residual_clamp: Optional[float] = 4.0):
+    def __init__(
+        self, channels: int = 64, use_batchnorm: bool = False,
+        residual_clamp: Optional[float] = 4.0, residual_scale: float = 1.0,
+    ):
         super().__init__()
         self.use_batchnorm = use_batchnorm
         self.residual_clamp = residual_clamp
+        self.residual_scale = residual_scale
         layers = [
             nn.Conv2d(channels, channels, kernel_size=3, padding=1),
         ]
@@ -55,7 +61,7 @@ class ResidualBlock(nn.Module):
         res = self.block(x)
         if self.residual_clamp is not None:
             res = res.clamp(-self.residual_clamp, self.residual_clamp)
-        return x + res
+        return x + res * self.residual_scale
 
 
 class UpsampleBlock(nn.Module):
@@ -167,6 +173,7 @@ class SRResNet(nn.Module):
         num_residual_blocks:  Number of residual blocks (default: 16).
         scale_factor:         Upscaling factor, must be 2, 4, or 8.
         use_batchnorm:        Whether to use BatchNorm layers (default: False).
+        color_preserving:     Predict brightness detail over interpolated RGB.
     """
 
     def __init__(
@@ -177,6 +184,7 @@ class SRResNet(nn.Module):
         scale_factor: int = 4,
         use_batchnorm: bool = False,
         residual_clamp: Optional[float] = 4.0,
+        color_preserving: bool = False,
     ):
         super().__init__()
 
@@ -184,6 +192,7 @@ class SRResNet(nn.Module):
             raise ValueError(f"scale_factor must be 2, 4, or 8, got {scale_factor}")
 
         self.scale_factor = scale_factor
+        self.color_preserving = color_preserving
         self.use_batchnorm = use_batchnorm
         self.num_residual_blocks = num_residual_blocks
         self.residual_clamp = residual_clamp
@@ -195,9 +204,13 @@ class SRResNet(nn.Module):
         )
 
         # Residual blocks
-        self.residual_blocks = nn.Sequential(
-            *[ResidualBlock(num_channels, use_batchnorm=use_batchnorm, residual_clamp=residual_clamp) for _ in range(num_residual_blocks)]
-        )
+        self.residual_blocks = nn.Sequential(*[
+            ResidualBlock(
+                num_channels, use_batchnorm=use_batchnorm, residual_clamp=residual_clamp,
+                residual_scale=0.1 if color_preserving else 1.0,
+            )
+            for _ in range(num_residual_blocks)
+        ])
 
         # Post-residual convolution (before global skip)
         post_residual_layers = [
@@ -214,7 +227,7 @@ class SRResNet(nn.Module):
         )
 
         # Final reconstruction
-        self.final = nn.Conv2d(num_channels, in_channels, kernel_size=9, padding=4)
+        self.final = nn.Conv2d(num_channels, 1 if color_preserving else in_channels, kernel_size=9, padding=4)
 
         self._init_weights()
 
@@ -238,7 +251,7 @@ class SRResNet(nn.Module):
         Returns:
             SR image tensor of shape (B, C, H*s, W*s).
         """
-        initial = self.initial(x)
+        initial = self.initial(x - 0.5 if self.color_preserving else x)
         residual = self.residual_blocks(initial)
         residual = self.post_residual(residual)
         if self.residual_clamp is not None:
@@ -247,4 +260,7 @@ class SRResNet(nn.Module):
         out = initial + residual  # global skip connection
         out = self.upsample(out)
         out = self.final(out)
+        if self.color_preserving:
+            base = nn.functional.interpolate(x, scale_factor=self.scale_factor, mode="bicubic", align_corners=False)
+            return add_luminance_detail(x, base, out * 0.1)
         return out if self.training else out.clamp(0, 1)

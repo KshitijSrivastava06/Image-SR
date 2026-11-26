@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 
 import cv2
 import numpy as np
+from PIL import Image
 import torch
 from torch.utils.data import Dataset
 
@@ -77,6 +78,7 @@ class SRTestDataset(Dataset):
         hr_dir: str,
         scale_factor: int = 4,
         downscale_method: str = "bicubic",
+        antialias: bool = False,
     ):
         self.hr_dir = Path(hr_dir)
         self.scale_factor = scale_factor
@@ -87,6 +89,7 @@ class SRTestDataset(Dataset):
             "bicubic": cv2.INTER_CUBIC,
         }
         self.interp = interp_map.get(downscale_method, cv2.INTER_CUBIC)
+        self.antialias = antialias
 
         self.files = sorted(
             f for f in self.hr_dir.iterdir()
@@ -104,8 +107,11 @@ class SRTestDataset(Dataset):
         hr = mod_crop(hr, self.scale_factor)
 
         h, w = hr.shape[:2]
-        lr = cv2.resize(hr, (w // self.scale_factor, h // self.scale_factor),
-                        interpolation=self.interp)
+        lr_size = (w // self.scale_factor, h // self.scale_factor)
+        if self.antialias:
+            lr = np.asarray(Image.fromarray(hr).resize(lr_size, Image.Resampling.BICUBIC))
+        else:
+            lr = cv2.resize(hr, lr_size, interpolation=self.interp)
 
         hr_tensor = torch.from_numpy(hr.astype(np.float32) / 255.0).permute(2, 0, 1)
         lr_tensor = torch.from_numpy(lr.astype(np.float32) / 255.0).permute(2, 0, 1)

@@ -1,6 +1,13 @@
+initialize_output: true
+
 model:
   name: srgan
   scale_factor: 4
+  color_preserving: true
+  num_channels: 24
+  num_residual_blocks: 6
+  use_batchnorm: false
+  residual_clamp: 8.0
   generator_weights: models/srresnet/final.pth  # warm-start from trained SRResNet
 
 data:
@@ -10,6 +17,7 @@ data:
   batch_size: 8           # G+D together -> reduced batch size for 8GB VRAM
   num_workers: 4
   cache_in_ram: true
+  antialias: true
 
 training:
   epochs: 150             # Warm-started from SRResNet; stabilized adversarial training

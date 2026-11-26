@@ -15,6 +15,8 @@ interpolation, then refined by the 3-layer CNN.  ~57K parameters.
 import torch
 import torch.nn as nn
 
+from models.luminance import add_luminance_detail
+
 
 class SRCNN(nn.Module):
     """
@@ -28,6 +30,7 @@ class SRCNN(nn.Module):
         f2:          Mapping kernel size (default: 1).
         f3:          Reconstruction kernel size (default: 5).
         scale_factor: Upscaling factor (for the internal bicubic pre-upscale).
+        color_preserving: Predict brightness detail over interpolated RGB.
     """
 
     def __init__(
@@ -39,9 +42,11 @@ class SRCNN(nn.Module):
         f2: int = 1,
         f3: int = 5,
         scale_factor: int = 4,
+        color_preserving: bool = False,
     ):
         super().__init__()
         self.scale_factor = scale_factor
+        self.color_preserving = color_preserving
 
         # Patch extraction & representation
         self.feature_extraction = nn.Sequential(
@@ -57,7 +62,7 @@ class SRCNN(nn.Module):
 
         # Reconstruction
         self.reconstruction = nn.Conv2d(
-            n2, in_channels, kernel_size=f3, padding=f3 // 2
+            n2, 1 if color_preserving else in_channels, kernel_size=f3, padding=f3 // 2
         )
 
         self._init_weights()
@@ -82,7 +87,7 @@ class SRCNN(nn.Module):
             SR image tensor of shape (B, C, H*s, W*s) in [0, 1].
         """
         # Pre-upscale LR input using bicubic interpolation
-        x = nn.functional.interpolate(
+        base = nn.functional.interpolate(
             x,
             scale_factor=self.scale_factor,
             mode="bicubic",
@@ -91,9 +96,12 @@ class SRCNN(nn.Module):
 
         # 3-layer CNN refinement
         # The three learned convolutions extract patches, map features, and reconstruct RGB.
-        out = self.feature_extraction(x)
+        out = self.feature_extraction(base)
         out = self.mapping(out)
         out = self.reconstruction(out)
+
+        if self.color_preserving:
+            return add_luminance_detail(x, base, out)
 
         # Keep training gradients outside the image range and clamp only the inference output.
         return out if self.training else out.clamp(0, 1)

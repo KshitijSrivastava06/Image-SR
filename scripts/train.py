@@ -58,9 +58,9 @@ def build_scheduler(sched_config: str, optimizer: optim.Optimizer, config: dict)
     return None
 
 
-def initialize_reconstruction(layer: torch.nn.Conv2d):
+def initialize_reconstruction(layer: torch.nn.Conv2d, *, color_preserving: bool = False):
     torch.nn.init.normal_(layer.weight, std=0.002)
-    torch.nn.init.constant_(layer.bias, 0.5)
+    torch.nn.init.constant_(layer.bias, 0.0 if color_preserving else 0.5)
 
 
 def run_training(config_path: str, resume_path: str = None):
@@ -93,11 +93,13 @@ def run_training(config_path: str, resume_path: str = None):
         hr_dir=config["data"]["train_hr_dir"],
         patch_size=config["data"]["patch_size"],
         scale_factor=scale_factor,
-        cache_in_ram=config["data"].get("cache_in_ram", True)
+        cache_in_ram=config["data"].get("cache_in_ram", True),
+        antialias=config["data"].get("antialias", False),
     )
     val_dataset = SRTestDataset(
         hr_dir=config["data"]["val_hr_dir"],
-        scale_factor=scale_factor
+        scale_factor=scale_factor,
+        antialias=config["data"].get("antialias", False),
     )
     
     train_loader = DataLoader(
@@ -142,8 +144,11 @@ def run_training(config_path: str, resume_path: str = None):
                 logger.info(f"Loaded generator warm-start weights from {weights_target}")
             
         if config.get("initialize_output") and (not config["model"].get("generator_weights") or weights_target is None):
-            initialize_reconstruction(generator.final)
-        discriminator = Discriminator(pool_size=config["training"].get("discriminator_pool_size", 6)).to(device)
+            initialize_reconstruction(generator.final, color_preserving=generator.color_preserving)
+        discriminator = Discriminator(
+            pool_size=config["training"].get("discriminator_pool_size", 6),
+            num_channels=config["training"].get("discriminator_channels", 64),
+        ).to(device)
         
         opt_g = build_optimizer(
             config["training"]["generator"]["optimizer"],
@@ -185,7 +190,10 @@ def run_training(config_path: str, resume_path: str = None):
     else:
         model = get_model(model_name, **model_kwargs).to(device)
         if config.get("initialize_output"):
-            initialize_reconstruction(model.reconstruction if model_name == "srcnn" else model.final)
+            initialize_reconstruction(
+                model.reconstruction if model_name == "srcnn" else model.final,
+                color_preserving=model.color_preserving,
+            )
         
         opt = build_optimizer(
             config["training"]["optimizer"],
@@ -233,7 +241,7 @@ def run_training(config_path: str, resume_path: str = None):
             # Export the generator for SRGAN. Its discriminator is needed only during training.
             state_dict = best.get("model_state_dict", best.get("generator_state_dict"))
 
-        final_dir = Path("models") / model_name
+        final_dir = Path(config["output"].get("model_dir", "models")) / model_name
         if scale_factor != 4:
             final_dir /= f"x{scale_factor}"
         final_dir.mkdir(parents=True, exist_ok=True)

@@ -18,8 +18,9 @@ class PostProcessor:
         strength: Overall strength of the post-processing (0.0 to 1.0).
                   Default is 0.5 (mild).
     """
-    def __init__(self, strength: float = 0.5):
+    def __init__(self, strength: float = 0.5, *, color_preserving: bool = False):
         self.strength = np.clip(strength, 0.0, 1.0)
+        self.color_preserving = color_preserving
         
     def process(self, img: np.ndarray) -> np.ndarray:
         """
@@ -34,6 +35,15 @@ class PostProcessor:
         if self.strength == 0:
             return img
             
+        if self.color_preserving:
+            # Sharpen luminance with a shared RGB offset, bounded before adding it.
+            luma = cv2.cvtColor(img.astype(np.float32), cv2.COLOR_RGB2GRAY)
+            blurred = cv2.GaussianBlur(luma, (0, 0), sigmaX=1.0)
+            detail = np.rint((luma - blurred) * (0.5 * self.strength))
+            lower = -img.min(axis=2).astype(np.int16)
+            upper = 255 - img.max(axis=2)
+            return (img + detail.clip(lower, upper)[..., None]).astype(np.uint8)
+
         # 1. Mild Edge-Aware Sharpening (Unsharp Mask)
         # We use a very light touch here because SR models already attempt to sharpen.
         # We just want to recover micro-contrast.

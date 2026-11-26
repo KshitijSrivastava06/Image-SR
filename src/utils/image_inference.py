@@ -41,7 +41,9 @@ class ImageProcessor:
         self.scale = scale
         self.device = next(model.parameters(), torch.empty(0)).device
         self.restoration = RestorationPipeline(**(restoration or {}))
-        self.refiner = PostProcessor(strength=refinement) if refinement else None
+        self.refiner = PostProcessor(
+            strength=refinement, color_preserving=getattr(model, "color_preserving", False),
+        ) if refinement else None
 
     # Inference mode disables gradient tracking while producing images.
     @torch.inference_mode()

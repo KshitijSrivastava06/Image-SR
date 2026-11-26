@@ -11,7 +11,7 @@ import imageio_ffmpeg
 import numpy as np
 import torch
 
-from app.model_loader import load_sr_model
+from app.model_loader import load_sr_model, model_identifier
 from models import get_model
 from src.evaluation.image_analysis import color_channels, edge_map, fidelity, jpeg_roundtrip, sampling_pair
 from src.restoration.frequency import gaussian_frequency_filter
@@ -98,6 +98,29 @@ class ProcessingTests(unittest.TestCase):
                 processor = ImageProcessor(model, "esrgan_generator", scale)
                 image = self.rng.integers(256, size=(9, 13, 3), dtype=np.uint8)
                 self.assertEqual(processor.process(image).image.shape, (9 * scale, 13 * scale, 3))
+
+    def test_local_checkpoints_enhance_detail_without_shifting_chroma(self):
+        device = torch.device("cpu")
+        flat_color = np.full((7, 9, 3), [40, 156, 230], dtype=np.uint8)
+        texture = self.rng.integers(16, 160, size=(195, 19, 1), dtype=np.uint8)
+        # The long axis triggers tiled inference on an image with a fixed RGB channel offset.
+        image = np.concatenate((texture, texture + 16, texture + 48), axis=2)
+        baseline = ImageProcessor(load_sr_model("bicubic", 4, device=device), "bicubic", 4)
+        expected = baseline.process(image).image.astype(np.int16)
+
+        for name in ("srcnn", "srresnet", "srgan"):
+            with self.subTest(model=name):
+                model = load_sr_model(name, 4, device=device)
+                processor = ImageProcessor(model, model_identifier(name), 4, refinement=0.4)
+                flat = processor.process(flat_color).image
+                np.testing.assert_array_equal(flat, np.broadcast_to(flat_color[0, 0], (28, 36, 3)))
+
+                result = processor.process(image, intermediates=True)
+                details = result.intermediates["before_refinement"].astype(np.int16) - expected
+                self.assertTrue(np.any(details))
+                for output in (result.image.astype(np.int16) - expected, details):
+                    # Common brightness offsets may differ by one after 8-bit rounding.
+                    self.assertLessEqual(np.abs(output[..., :1] - output[..., 1:]).max(), 1)
 
     def test_frequency_lowpass_reduces_checkerboard_contrast(self):
         checkerboard = (48 + 160 * (np.indices((31, 33)).sum(axis=0) % 2)).astype(np.uint8)
